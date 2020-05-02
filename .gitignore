@@ -13,3 +13,4 @@ __pycache__/
 code/__pycache__/
 results/
 replic/
+data/shape_predictor_68_face_landmarks.dat
