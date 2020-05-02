@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("-i", "--in-folder", type=str, help="input speech folder", required=True)
 parser.add_argument("-m", "--model", type=str, help="Pre-trained model", required=True)
 parser.add_argument("-o", "--out-fold", type=str, help="output folder", required=True)
-parser.add_argument("-r", "--replication_folder", type=str, help="Replicatino study data folder",
+parser.add_argument("-r", "--replication_folder", type=str, help="Replication study data folder",
                     default="../replic")
 
 parser.add_argument("--mean_shape", type=str, help="PCA mean shape vector npy file path", default="../data/mean_shape.npy")

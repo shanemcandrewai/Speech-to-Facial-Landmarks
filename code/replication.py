@@ -1,6 +1,8 @@
 """ Replication toolkit """
 import glob
 import os
+from pathlib import Path
+import shutil
 import urllib.request
 import bz2
 import subprocess as sp
@@ -10,47 +12,35 @@ from scipy.spatial import procrustes
 from scipy import stats
 import dlib
 
-class FrameFile:
+class Frames:
     """ Frame file manager """
-    def __init__(self, frame_dir='../replic/frames',
-                 prefix='frame', extension='jpeg', num_begin=-9, num_end=-5):
+    def __init__(self, frame_dir='../replic/frames', extension='jpeg', num_len=4):
         self.frame_dir = frame_dir
-        self.prefix = prefix
         self.extension = extension
-        self.num_begin = num_begin
-        self.num_end = num_end
+        self.num_len = num_len
         self.frame_num = None
         self.file_name = None
 
     def get_file_path(self, frame_num=30):
         """ Build file path from frame number """
         self.frame_num = frame_num
-        self.file_name = (self.prefix + str(frame_num).zfill(
-            self.num_end - self.num_begin) + '.' + self.extension)
+        self.file_name = (str(frame_num).zfill(self.num_len) + '.' + self.extension)
         return os.path.join(self.frame_dir, self.file_name)
 
-    def get_frame_num(self, file_name='frame0030.jpeg'):
+    def get_frame_num(self, file_name='../replic/frames/0030.jpeg'):
         """ Derive frame number from image file name """
         self.file_name = file_name
-        self.frame_num = file_name[self.num_begin:self.num_end]
+        self.frame_num = int(os.path.splitext(os.path.split(file_name)[1])[0])
         return self.frame_num
 
-class Frames:
-    """ Frames directory manager """
-    def __init__(self, frame_dir='../replic/frames', frame_file=None):
-        self.frame_dir = frame_dir
-        if frame_file is None:
-            self.frame_file = FrameFile()
-
-    def get_frames(self):
+    def get_frame_file_names(self):
         """ Get list of frame files """
         return sorted(glob.glob(os.path.join(self.frame_dir, '*.' +
-                                             self.frame_file.extension)))
-
+                                             self.extension)))
     def get_frame_nums(self):
         """ Get list of frame numbers """
-        frames = self.get_frames()
-        return {int(frame[self.frame_file.num_begin:self.frame_file.num_end]) for frame in frames}
+        frames = self.get_frame_file_names()
+        return {self.get_frame_num(frame) for frame in frames}
 
 class Dlib():
     """ Extract landmarks from frames using Dlib """
@@ -75,7 +65,7 @@ class Dlib():
         """ load image and attempt to extract faces """
         self.faces = None
         self.shape = None
-        image_file_path = FrameFile().get_file_path(frame_num)
+        image_file_path = Frames().get_file_path(frame_num)
         self.rgb_image = dlib.load_rgb_image(image_file_path)
         if self.rgb_image is not None:
             self.frame_num = frame_num
@@ -150,7 +140,7 @@ class Plots(Dlib):
         self.axes.plot(features['lips_out'][:, 0], features['lips_out'][:, 1], 'b-')
         self.axes.plot(features['lips_in'][:, 0], features['lips_in'][:, 1], 'b-')
 
-    def get_all_lmarks(self, new_extract=False, extract_file='obama2s.npy'):
+    def get_all_lmarks(self, new_extract=False, extract_file='../replic/data/obama2s.npy'):
         """ Get landmarks from face for all frames as ndarray """
         if not new_extract and os.path.exists(extract_file):
             self.all_lmarks = np.load(extract_file)
@@ -161,6 +151,7 @@ class Plots(Dlib):
                 else:
                     self.all_lmarks = np.concatenate([self.all_lmarks,
                                                       self.get_lmarks(frame_num)])
+            Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
             np.save(extract_file, self.all_lmarks)
         self.bounds['mid'] = np.nanmean(self.all_lmarks, 0)
         self.bounds['xmid'] = np.nanmean(self.all_lmarks[:, :, 0])
@@ -240,7 +231,7 @@ class Plots(Dlib):
         if lmarks is None:
             lmarks = self.get_all_lmarks()
         if with_frame:
-            image = plt.imread(FrameFile().get_file_path(frame_num))
+            image = plt.imread(Frames().get_file_path(frame_num))
             self.axes.imshow(image)
         frame_left = self.bounds['xmid'] - self.bounds['width']/2
         frame_right = self.bounds['xmid'] + self.bounds['width']/2
@@ -267,7 +258,7 @@ class Plots(Dlib):
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             if with_frame:
-                image = plt.imread(FrameFile().get_file_path(frame_num))
+                image = plt.imread(Frames().get_file_path(frame_num))
                 self.axes.imshow(image)
 
             self._plot_features(lmarks, frame_num)
@@ -306,21 +297,25 @@ class Video(Plots):
         super().__init__()
         self.video_dir = video_dir
         self.audio_dir = audio_dir
-        self.frame_dir = frames_dir
+        self.frames_dir = frames_dir
 
     def extract_audio(self, video_in='obama2s.mp4',
                       audio_out=None):
         """ Extract audio from video sample """
         if audio_out is None:
             audio_out = os.path.join(self.audio_dir, os.path.splitext(video_in)[0] + '.wav')
+        Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', os.path.join(self.video_dir, video_in), '-y',
                 audio_out], check=True)
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
+        if os.path.isdir(self.frames_dir):
+            shutil.rmtree(self.frames_dir)
+        os.makedirs(self.frames_dir)
         sp.run(['ffmpeg', '-i', os.path.join(self.video_dir, video_in), '-start_number',
                 str(start_number), '-qscale:v', str(quality),
-                os.path.join(self.frame_dir, 'frame%04d.jpeg')], check=True)
+                os.path.join(self.frames_dir, '%04d.jpeg')], check=True)
 
     def crop(self, video_in='obama2s.mp4', video_out='obama_crop.mp4',
              crop_param=None):
