@@ -61,11 +61,11 @@ class Dlib():
                 model.write(bz2.decompress(response.read()))
         self.predictor = dlib.shape_predictor(self.model_file)
 
-    def load_image(self, frame_num=30):
+    def load_image(self, frame_num=30, frames_obj=Frames()):
         """ load image and attempt to extract faces """
         self.faces = None
         self.shape = None
-        image_file_path = Frames().get_file_path(frame_num)
+        image_file_path = frames_obj.get_file_path(frame_num)
         self.rgb_image = dlib.load_rgb_image(image_file_path)
         if self.rgb_image is not None:
             self.frame_num = frame_num
@@ -92,7 +92,20 @@ class Dlib():
             return np.full((1, 68, 2), np.nan)
         return np.array([(part.x, part.y) for part in self.shape.parts()]).reshape((1, 68, 2))
 
-class Plots(Dlib):
+    def display_overlay(self, image_file=None, frame_num=30):
+        """ Display image overlayed with landmarks """
+        win = dlib.image_window()
+        win.clear_overlay()
+        if image_file is None:
+            self.load_image(frame_num)
+        else:
+            self.rgb_image = dlib.load_rgb_image(image_file)
+        win.set_image(self.rgb_image)
+        if self.get_shape(frame_num) is not None:
+            win.add_overlay(self.shape)
+        dlib.hit_enter_to_continue()
+
+class DataProcess(Dlib):
     """ Plots for landmarks """
     def __init__(self, plots_dir='plots', width=500, height=500):
         super().__init__(None)
@@ -213,6 +226,8 @@ class Plots(Dlib):
         template_2d = np.load(template)[:, :2]
         return lmarks - closed_mouth + template_2d
 
+class Draw(DataProcess):
+    """ Draw landmarks with matplotlib """
     def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96, annot=False):
         """ Plot landmarks and save """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
@@ -290,7 +305,7 @@ class Plots(Dlib):
                     self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
-class Video(Plots):
+class Video():
     """ Video processing """
     def __init__(self, video_dir='../replic/video_in', audio_dir='../replic/audio_in',
                  frames_dir='../replic/frames'):
@@ -321,20 +336,20 @@ class Video(Plots):
              crop_param=None):
         """ crop video """
         if crop_param is None:
-            plots = Plots()
-            plots.get_all_lmarks()
-            crop_param = str(plots.bounds['width']) + ':' + str(
-                plots.bounds['height']) + ':' +  str(
-                    round(plots.bounds['xmid'] - plots.bounds['width']/2)) + ':' +  str(
-                        round(plots.bounds['ymid'] - plots.bounds['height']/2))
+            data_proc = DataProcess()
+            data_proc.get_all_lmarks()
+            crop_param = str(data_proc.bounds['width']) + ':' + str(
+                data_proc.bounds['height']) + ':' +  str(
+                    round(data_proc.bounds['xmid'] - data_proc.bounds['width']/2)) + ':' +  str(
+                        round(data_proc.bounds['ymid'] - data_proc.bounds['height']/2))
         sp.run(['ffmpeg', '-i', video_in, '-filter:v',
                 'crop=' + crop_param, '-y',
                 os.path.join(self.video_dir, video_out)], check=True)
 
-    def create_video(self, video_out='plots.mp4', framerate=30):
+    def create_video(self, video_out='plots.mp4', plots_dir='plots', framerate=30):
         """ create video from images """
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
-                os.path.join(os.path.join(self.plots_dir, '%d.png')),
+                os.path.join(os.path.join(plots_dir, '%d.png')),
                 '-y', os.path.join(os.path.join(self.video_dir, video_out))],
                check=True)
 
@@ -360,16 +375,3 @@ class Video(Plots):
         sp.run(['ffmpeg', '-i', video_in, '-s', str(width) + 'x' + str(height),
                 '-c:a', 'copy', '-y',
                 os.path.join(self.video_dir, video_out)], check=True)
-
-    def display_overlay(self, image_file=None, frame_num=30):
-        """ Display image overlayed with landmarks """
-        win = dlib.image_window()
-        win.clear_overlay()
-        if image_file is None:
-            self.load_image(frame_num)
-        else:
-            self.rgb_image = dlib.load_rgb_image(image_file)
-        win.set_image(self.rgb_image)
-        if self.get_shape(frame_num) is not None:
-            win.add_overlay(self.shape)
-        dlib.hit_enter_to_continue()
