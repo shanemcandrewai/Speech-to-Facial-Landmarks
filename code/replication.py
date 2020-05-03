@@ -40,9 +40,9 @@ class Frames:
     def get_frame_nums(self):
         """ Get list of frame numbers """
         frames = self.get_frame_file_names()
-        return {self.get_frame_num(frame) for frame in frames}
+        return [self.get_frame_num(frame) for frame in frames]
 
-class Dlib():
+class Dlib:
     """ Extract landmarks from frames using Dlib """
     def __init__(self, rgb_image=None, model_dir='../data',
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
@@ -105,10 +105,9 @@ class Dlib():
             win.add_overlay(self.shape)
         dlib.hit_enter_to_continue()
 
-class DataProcess(Dlib):
+class DataProcess:
     """ Plots for landmarks """
-    def __init__(self, plots_dir='plots', width=500, height=500):
-        super().__init__(None)
+    def __init__(self, plots_dir='../replic/plots', width=500, height=500):
         self.plots_dir = plots_dir
         self.axes = None
         self.all_lmarks = None
@@ -116,54 +115,20 @@ class DataProcess(Dlib):
                        'mid': None, 'xmid': None,
                        'ymid': None}
 
-    def _plot_features(self, lmarks, frame_num=0):
-        """ calculate and plot facial features """
-        features = {'jaw': lmarks[frame_num, :17],
-                    'eyebrow_r': lmarks[frame_num, 17:22],
-                    'eyebrow_l': lmarks[frame_num, 22:27],
-                    'nose_top': lmarks[frame_num, 27:31],
-                    'nose_side_r': np.concatenate((lmarks[frame_num, 27:28],
-                                                   lmarks[frame_num, 31:32])),
-                    'nose_side_l': np.concatenate((lmarks[frame_num, 27:28],
-                                                   lmarks[frame_num, 35:36])),
-                    'nose_mid_r': lmarks[frame_num, 30:32],
-                    'nose_mid_l': np.concatenate((lmarks[frame_num, 30:31],
-                                                  lmarks[frame_num, 35:36])),
-                    'nose_bottom': lmarks[frame_num, 31:36],
-                    'eye_r': np.concatenate((lmarks[frame_num, 36:42],
-                                             lmarks[frame_num, 36:37])),
-                    'eye_l': np.concatenate((lmarks[frame_num, 42:48],
-                                             lmarks[frame_num, 42:43])),
-                    'lips_out': np.concatenate((lmarks[frame_num, 48:60],
-                                                lmarks[frame_num, 48:49])),
-                    'lips_in': np.concatenate((lmarks[frame_num, 60:],
-                                               lmarks[frame_num, 60:61]))}
-
-        self.axes.plot(features['jaw'][:, 0], features['jaw'][:, 1], 'b-')
-        self.axes.plot(features['eyebrow_r'][:, 0], features['eyebrow_r'][:, 1], 'b-')
-        self.axes.plot(features['eyebrow_l'][:, 0], features['eyebrow_l'][:, 1], 'b-')
-        self.axes.plot(features['nose_top'][:, 0], features['nose_top'][:, 1], 'b-')
-        self.axes.plot(features['nose_side_r'][:, 0], features['nose_side_r'][:, 1], 'b-')
-        self.axes.plot(features['nose_side_l'][:, 0], features['nose_side_l'][:, 1], 'b-')
-        self.axes.plot(features['nose_mid_r'][:, 0], features['nose_mid_r'][:, 1], 'b-')
-        self.axes.plot(features['nose_mid_l'][:, 0], features['nose_mid_l'][:, 1], 'b-')
-        self.axes.plot(features['nose_bottom'][:, 0], features['nose_bottom'][:, 1], 'b-')
-        self.axes.plot(features['eye_r'][:, 0], features['eye_r'][:, 1], 'b-')
-        self.axes.plot(features['eye_l'][:, 0], features['eye_l'][:, 1], 'b-')
-        self.axes.plot(features['lips_out'][:, 0], features['lips_out'][:, 1], 'b-')
-        self.axes.plot(features['lips_in'][:, 0], features['lips_in'][:, 1], 'b-')
-
-    def get_all_lmarks(self, new_extract=False, extract_file='../replic/data/obama2s.npy'):
+    def get_all_lmarks(self, new_extract=False, extract_file='../replic/data/obama2s.npy',
+                       frames_obj=Frames(), dlib_obj=Dlib()):
         """ Get landmarks from face for all frames as ndarray """
-        if not new_extract and os.path.exists(extract_file):
+        if new_extract:
+            self.all_lmarks = None
+        elif os.path.exists(extract_file):
             self.all_lmarks = np.load(extract_file)
         if self.all_lmarks is None:
-            for frame_num in Frames().get_frame_nums():
+            for frame_num in frames_obj.get_frame_nums():
                 if self.all_lmarks is None:
-                    self.all_lmarks = self.get_lmarks(frame_num)
+                    self.all_lmarks = dlib_obj.get_lmarks(frame_num)
                 else:
                     self.all_lmarks = np.concatenate([self.all_lmarks,
-                                                      self.get_lmarks(frame_num)])
+                                                      dlib_obj.get_lmarks(frame_num)])
             Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
             np.save(extract_file, self.all_lmarks)
         self.bounds['mid'] = np.nanmean(self.all_lmarks, 0)
@@ -228,17 +193,56 @@ class DataProcess(Dlib):
 
 class Draw(DataProcess):
     """ Draw landmarks with matplotlib """
+    def __init__(self):
+        super().__init__(self)
+
+    def _plot_features(self, lmarks, frame_num=0):
+        """ calculate and plot facial features """
+        features = {'jaw': lmarks[frame_num, :17],
+                    'eyebrow_r': lmarks[frame_num, 17:22],
+                    'eyebrow_l': lmarks[frame_num, 22:27],
+                    'nose_top': lmarks[frame_num, 27:31],
+                    'nose_side_r': np.concatenate((lmarks[frame_num, 27:28],
+                                                   lmarks[frame_num, 31:32])),
+                    'nose_side_l': np.concatenate((lmarks[frame_num, 27:28],
+                                                   lmarks[frame_num, 35:36])),
+                    'nose_mid_r': lmarks[frame_num, 30:32],
+                    'nose_mid_l': np.concatenate((lmarks[frame_num, 30:31],
+                                                  lmarks[frame_num, 35:36])),
+                    'nose_bottom': lmarks[frame_num, 31:36],
+                    'eye_r': np.concatenate((lmarks[frame_num, 36:42],
+                                             lmarks[frame_num, 36:37])),
+                    'eye_l': np.concatenate((lmarks[frame_num, 42:48],
+                                             lmarks[frame_num, 42:43])),
+                    'lips_out': np.concatenate((lmarks[frame_num, 48:60],
+                                                lmarks[frame_num, 48:49])),
+                    'lips_in': np.concatenate((lmarks[frame_num, 60:],
+                                               lmarks[frame_num, 60:61]))}
+
+        self.axes.plot(features['jaw'][:, 0], features['jaw'][:, 1], 'b-')
+        self.axes.plot(features['eyebrow_r'][:, 0], features['eyebrow_r'][:, 1], 'b-')
+        self.axes.plot(features['eyebrow_l'][:, 0], features['eyebrow_l'][:, 1], 'b-')
+        self.axes.plot(features['nose_top'][:, 0], features['nose_top'][:, 1], 'b-')
+        self.axes.plot(features['nose_side_r'][:, 0], features['nose_side_r'][:, 1], 'b-')
+        self.axes.plot(features['nose_side_l'][:, 0], features['nose_side_l'][:, 1], 'b-')
+        self.axes.plot(features['nose_mid_r'][:, 0], features['nose_mid_r'][:, 1], 'b-')
+        self.axes.plot(features['nose_mid_l'][:, 0], features['nose_mid_l'][:, 1], 'b-')
+        self.axes.plot(features['nose_bottom'][:, 0], features['nose_bottom'][:, 1], 'b-')
+        self.axes.plot(features['eye_r'][:, 0], features['eye_r'][:, 1], 'b-')
+        self.axes.plot(features['eye_l'][:, 0], features['eye_l'][:, 1], 'b-')
+        self.axes.plot(features['lips_out'][:, 0], features['lips_out'][:, 1], 'b-')
+        self.axes.plot(features['lips_in'][:, 0], features['lips_in'][:, 1], 'b-')
+
     def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96, annot=False):
         """ Plot landmarks and save """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
+        lmarks = self.get_all_lmarks()
         if frame_num_sel is None:
-            lmarks = self.get_all_lmarks()
             for frame_num in range(lmarks.shape[0]):
                 self.save_scatter_frame(frame_num, lmarks, with_frame, annot=annot)
         else:
-            lmarks = self.get_lmarks(frame_num_sel)
-            self.save_scatter_frame(frame_num_sel, lmarks, with_frame, annot=annot)
+            self.save_scatter_frame(frame_num_sel, lmarks[frame_num_sel], with_frame, annot=annot)
 
     def save_scatter_frame(self, frame_num=30, lmarks=None, with_frame=True, annot=False):
         """ Plot landmarks and save frame """
