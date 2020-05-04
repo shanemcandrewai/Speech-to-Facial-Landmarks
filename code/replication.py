@@ -16,6 +16,7 @@ class Frames:
     """ Frame file manager """
     def __init__(self, frame_dir='../replic/frames', extension='jpeg', num_len=4):
         self.frame_dir = frame_dir
+        Path(frame_dir).mkdir(parents=True, exist_ok=True)
         self.extension = extension
         self.num_len = num_len
         self.frame_num = None
@@ -61,11 +62,11 @@ class Dlib:
                 model.write(bz2.decompress(response.read()))
         self.predictor = dlib.shape_predictor(self.model_file)
 
-    def load_image(self, frame_num=30, frames_obj=Frames()):
+    def load_image(self, frame_num=30, frames=Frames()):
         """ load image and attempt to extract faces """
         self.faces = None
         self.shape = None
-        image_file_path = frames_obj.get_file_path(frame_num)
+        image_file_path = frames.get_file_path(frame_num)
         self.rgb_image = dlib.load_rgb_image(image_file_path)
         if self.rgb_image is not None:
             self.frame_num = frame_num
@@ -107,23 +108,19 @@ class Dlib:
 
 class DataProcess:
     """ Plots for landmarks """
-    def __init__(self, plots_dir='../replic/plots', width=500, height=500):
-        self.plots_dir = plots_dir
+    def __init__(self):
         self.axes = None
         self.all_lmarks = None
-        self.bounds = {'width': width, 'height': height,
-                       'mid': None, 'xmid': None,
-                       'ymid': None}
 
     def get_all_lmarks(self, new_extract=False, extract_file='../replic/data/obama2s.npy',
-                       frames_obj=Frames(), dlib_obj=Dlib()):
+                       frames=Frames(), dlib_obj=Dlib()):
         """ Get landmarks from face for all frames as ndarray """
         if new_extract:
             self.all_lmarks = None
         elif os.path.exists(extract_file):
             self.all_lmarks = np.load(extract_file)
         if self.all_lmarks is None:
-            for frame_num in frames_obj.get_frame_nums():
+            for frame_num in frames.get_frame_nums():
                 if self.all_lmarks is None:
                     self.all_lmarks = dlib_obj.get_lmarks(frame_num)
                 else:
@@ -131,9 +128,6 @@ class DataProcess:
                                                       dlib_obj.get_lmarks(frame_num)])
             Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
             np.save(extract_file, self.all_lmarks)
-        self.bounds['mid'] = np.nanmean(self.all_lmarks, 0)
-        self.bounds['xmid'] = np.nanmean(self.all_lmarks[:, :, 0])
-        self.bounds['ymid'] = np.nanmean(self.all_lmarks[:, :, 1])
         return self.all_lmarks
 
     def filter_outliers(self, zscore=4, extract_file='obama2s.npy'):
@@ -191,10 +185,16 @@ class DataProcess:
         template_2d = np.load(template)[:, :2]
         return lmarks - closed_mouth + template_2d
 
-class Draw(DataProcess):
+class Draw:
     """ Draw landmarks with matplotlib """
-    def __init__(self):
-        super().__init__(self)
+    def __init__(self, plots_dir='../replic/plots', data_proc=DataProcess(), width=500, height=500):
+        Path(plots_dir).mkdir(parents=True, exist_ok=True)
+        self.plots_dir = plots_dir
+        self.data_proc = data_proc
+        lmarks = data_proc.get_all_lmarks()
+        self.axes = None
+        self.bounds = {'width': width, 'height': height, 'mid': np.nanmean(lmarks, 0),
+                       'xmid': np.nanmean(lmarks[:, 0]), 'ymid': np.nanmean(lmarks[:, 0])}
 
     def _plot_features(self, lmarks, frame_num=0):
         """ calculate and plot facial features """
@@ -237,7 +237,7 @@ class Draw(DataProcess):
         """ Plot landmarks and save """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
-        lmarks = self.get_all_lmarks()
+        lmarks = self.data_proc.get_all_lmarks()
         if frame_num_sel is None:
             for frame_num in range(lmarks.shape[0]):
                 self.save_scatter_frame(frame_num, lmarks, with_frame, annot=annot)
@@ -248,7 +248,7 @@ class Draw(DataProcess):
         """ Plot landmarks and save frame """
         self.axes.clear()
         if lmarks is None:
-            lmarks = self.get_all_lmarks()
+            lmarks = self.data_proc.get_all_lmarks()
         if with_frame:
             image = plt.imread(Frames().get_file_path(frame_num))
             self.axes.imshow(image)
@@ -273,7 +273,7 @@ class Draw(DataProcess):
         """ save line plots """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
-        lmarks = self.get_all_lmarks()
+        lmarks = self.data_proc.get_all_lmarks()
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             if with_frame:
@@ -293,8 +293,11 @@ class Draw(DataProcess):
         """ save line plots with Procrustes analysis """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
-        lmarks = self.get_procrustes(
+        lmarks = self.data_proc.get_procrustes(
             extract_file=extract_file, lips_only=lips_only)
+        if os.path.isdir(self.plots_dir):
+            shutil.rmtree(self.plots_dir)
+        Path(self.plots_dir).mkdir(parents=True, exist_ok=True)
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             self.axes.set_aspect(1)
@@ -309,7 +312,7 @@ class Draw(DataProcess):
                     self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
-class Video():
+class Video:
     """ Video processing """
     def __init__(self, video_dir='../replic/video_in', audio_dir='../replic/audio_in',
                  frames_dir='../replic/frames'):
@@ -331,21 +334,20 @@ class Video():
         """ Extract frames from video using FFmpeg """
         if os.path.isdir(self.frames_dir):
             shutil.rmtree(self.frames_dir)
-        os.makedirs(self.frames_dir)
+        Path(self.frames_dir).mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', os.path.join(self.video_dir, video_in), '-start_number',
                 str(start_number), '-qscale:v', str(quality),
                 os.path.join(self.frames_dir, '%04d.jpeg')], check=True)
 
     def crop(self, video_in='obama2s.mp4', video_out='obama_crop.mp4',
-             crop_param=None):
+             crop_param=None, draw=Draw()):
         """ crop video """
         if crop_param is None:
-            data_proc = DataProcess()
-            data_proc.get_all_lmarks()
-            crop_param = str(data_proc.bounds['width']) + ':' + str(
-                data_proc.bounds['height']) + ':' +  str(
-                    round(data_proc.bounds['xmid'] - data_proc.bounds['width']/2)) + ':' +  str(
-                        round(data_proc.bounds['ymid'] - data_proc.bounds['height']/2))
+            draw.get_all_lmarks()
+            crop_param = str(draw.bounds['width']) + ':' + str(
+                draw.bounds['height']) + ':' +  str(
+                    round(draw.bounds['xmid'] - draw.bounds['width']/2)) + ':' +  str(
+                        round(draw.bounds['ymid'] - draw.bounds['height']/2))
         sp.run(['ffmpeg', '-i', video_in, '-filter:v',
                 'crop=' + crop_param, '-y',
                 os.path.join(self.video_dir, video_out)], check=True)
@@ -379,3 +381,11 @@ class Video():
         sp.run(['ffmpeg', '-i', video_in, '-s', str(width) + 'x' + str(height),
                 '-c:a', 'copy', '-y',
                 os.path.join(self.video_dir, video_out)], check=True)
+
+class Process:
+    """ User process flows """
+    def __init__(self, video_in='obama2s.mp4'):
+        self.video_in = video_in
+
+    def extract(self):
+        """ extract landmarks from video, normalise and save to file """
