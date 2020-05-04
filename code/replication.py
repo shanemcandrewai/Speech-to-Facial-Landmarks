@@ -43,7 +43,7 @@ class Frames:
         frames = self.get_frame_file_names()
         return [self.get_frame_num(frame) for frame in frames]
 
-class Dlib:
+class DlibProcess:
     """ Extract landmarks from frames using Dlib """
     def __init__(self, rgb_image=None, model_dir='../data',
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
@@ -110,22 +110,20 @@ class DataProcess:
     """ Plots for landmarks """
     def __init__(self):
         self.axes = None
-        self.all_lmarks = None
+        self.all_lmarks = np.empty((0, 68, 2))
 
     def get_all_lmarks(self, new_extract=False, extract_file='../replic/data/obama2s.npy',
-                       frames=Frames(), dlib_obj=Dlib()):
+                       dlib_proc=DlibProcess(), video=Video()):
         """ Get landmarks from face for all frames as ndarray """
         if new_extract:
             self.all_lmarks = None
         elif os.path.exists(extract_file):
             self.all_lmarks = np.load(extract_file)
         if self.all_lmarks is None:
+            if not frames.get_frame_nums():
+                video.extract_frames()
             for frame_num in frames.get_frame_nums():
-                if self.all_lmarks is None:
-                    self.all_lmarks = dlib_obj.get_lmarks(frame_num)
-                else:
-                    self.all_lmarks = np.concatenate([self.all_lmarks,
-                                                      dlib_obj.get_lmarks(frame_num)])
+                self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
             Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
             np.save(extract_file, self.all_lmarks)
         return self.all_lmarks
@@ -315,7 +313,7 @@ class Draw:
 class Video:
     """ Video processing """
     def __init__(self, video_dir='../replic/video_in', audio_dir='../replic/audio_in',
-                 frames_dir='../replic/frames'):
+                 frames=Frames()):
         super().__init__()
         self.video_dir = video_dir
         self.audio_dir = audio_dir
