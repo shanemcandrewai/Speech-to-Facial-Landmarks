@@ -14,7 +14,8 @@ import dlib
 
 class Frames:
     """ Frame file manager """
-    def __init__(self, frame_dir='../replic/frames', extension='jpeg', num_len=4):
+    def __init__(self, frame_dir=os.path.join('..', 'replic', 'frames'),
+                 extension='jpeg', num_len=4):
         self.frame_dir = frame_dir
         Path(frame_dir).mkdir(parents=True, exist_ok=True)
         self.extension = extension
@@ -28,7 +29,7 @@ class Frames:
         self.file_name = (str(frame_num).zfill(self.num_len) + '.' + self.extension)
         return os.path.join(self.frame_dir, self.file_name)
 
-    def get_frame_num(self, file_name='../replic/frames/0030.jpeg'):
+    def get_frame_num(self, file_name=os.path.join('..', 'replic', 'frames', '0030.jpeg')):
         """ Derive frame number from image file name """
         self.file_name = file_name
         self.frame_num = int(os.path.splitext(os.path.split(file_name)[1])[0])
@@ -45,7 +46,7 @@ class Frames:
 
 class DlibProcess:
     """ Extract landmarks from frames using Dlib """
-    def __init__(self, rgb_image=None, model_dir='../data',
+    def __init__(self, rgb_image=None, model_dir=os.path.join('..', 'data'),
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
                  'shape_predictor_68_face_landmarks.dat.bz2'):
         self.detector = dlib.get_frontal_face_detector()
@@ -108,14 +109,17 @@ class DlibProcess:
 
 class DataProcess:
     """ Plots for landmarks """
-    def __init__(self):
+    def __init__(self, extract_file=os.path.join('..', 'replic', 'data', 'obama2s.npy')):
+        self.extract_file = extract_file
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
     def get_all_lmarks(self, new_extract=False,
-                       extract_file='../replic/data/obama2s.npy',
+                       extract_file=None,
                        dlib_proc=DlibProcess(), frames=Frames()):
         """ Get landmarks from face for all frames as ndarray """
+        if extract_file is None:
+            extract_file = self.extract_file
         if new_extract:
             self.all_lmarks = None
         elif os.path.exists(extract_file):
@@ -129,19 +133,23 @@ class DataProcess:
             np.save(extract_file, self.all_lmarks)
         return self.all_lmarks
 
-    def filter_outliers(self, zscore=4, extract_file='obama2s.npy'):
+    def filter_outliers(self, zscore=4, extract_file=None):
         """ replace outliers greater than specified zscore with np.nan) """
+        if extract_file is None:
+            extract_file = self.extract_file
         lmarks = self.get_all_lmarks(extract_file=extract_file)
         lmarks_zscore = stats.zscore(lmarks, nan_policy='omit')
         with np.errstate(invalid='ignore'):
             lmarks[np.any(lmarks_zscore > zscore, (1, 2, 3))] = np.nan
         return lmarks
 
-    def get_procrustes(self, extract_file='obama2s.npy', lips_only=False):
+    def get_procrustes(self, extract_file=None, lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
+        if extract_file is None:
+            extract_file = self.extract_file
         lmarks = self.get_all_lmarks(extract_file=extract_file)
         if lips_only:
-            lmarks = lmarks[..., 48:, :]
+            lmarks = lmarks[:, 48:, :]
         mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
         proc_lmarks = np.full(lmarks.shape, np.nan)
         for frame_num in range(lmarks.shape[0]):
@@ -154,8 +162,10 @@ class DataProcess:
             proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
         return proc_lmarks
 
-    def interpolate_lmarks(self, extract_file='obama2s.npy', old_rate=30, new_rate=25):
+    def interpolate_lmarks(self, extract_file=None, old_rate=30, new_rate=25):
         """ Change the frame rate of the extracted landmarks using linear interpolation """
+        if extract_file is None:
+            extract_file = self.extract_file
         lmarks = self.get_procrustes(extract_file=extract_file)
         old_frame_axis = np.arange(lmarks.shape[0])
         new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(lmarks.shape[0]*new_rate/old_rate))
@@ -167,18 +177,27 @@ class DataProcess:
                                                              lmarks[:, ax1, ax2, ax3])
         return new_lmarks
 
-    def get_closed_mouth_frame(self, extract_file='obama2s.npy', lmarks=None):
-        """ Determine frame with the minimum distance between the inner lips """
+    def get_closed_mouth_frame(self, extract_file=None, lmarks=None):
+        """ Determine frame with the minimum distance between the inner lips where
+            the horizonal distance is no more the one standard deviation from the mean """
+        if extract_file is None:
+            extract_file = self.extract_file
         if lmarks is None:
             lmarks = self.get_procrustes(extract_file=extract_file)
-        top_lip = lmarks[..., 61:64, :]
-        bottom_lip = lmarks[..., 65:68, :]
-        diffsq = (top_lip - bottom_lip)**2
-        dist = (diffsq[..., 0] + diffsq[..., 1])**0.5
-        return np.nanargmin(np.sum(dist, -1))
+        lip_top = lmarks[:, 61:64]
+        lip_bottom = lmarks[:, 65:68]
+        lip_left = lmarks[:, 60:61]
+        lip_right = lmarks[:, 64:65]
+        diff_squared_vert = (lip_top - lip_bottom)**2
+        diff_squared_hori = (lip_left - lip_right)**2
+        diff_vert_total = (diff_squared_vert[:, 0] + diff_squared_vert[:, 1])
+        return np.nanargmin(np.sum(diff_vert_total, -1))
 
-    def remove_identity(self, extract_file='obama2s.npy', template='../data/mean.npy'):
+    def remove_identity(self, extract_file=None,
+                        template=os.path.join('..', 'data', 'mean.npy')):
         """ current frame - the closed mouth frame + template """
+        if extract_file is None:
+            extract_file = self.extract_file
         lmarks = self.interpolate_lmarks(extract_file=extract_file).reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
         template_2d = np.load(template)[:, :2]
@@ -186,7 +205,8 @@ class DataProcess:
 
 class Draw:
     """ Draw landmarks with matplotlib """
-    def __init__(self, plots_dir='../replic/plots', data_proc=DataProcess(), width=500, height=500):
+    def __init__(self, plots_dir=os.path.join('..', 'replic', 'plots'),
+                 data_proc=DataProcess(), width=500, height=500):
         Path(plots_dir).mkdir(parents=True, exist_ok=True)
         self.plots_dir = plots_dir
         self.data_proc = data_proc
@@ -287,7 +307,8 @@ class Draw:
             self.axes.invert_yaxis()
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
-    def save_plots_proc(self, dpi=96, annot=False, extract_file='obama2s.npy',
+    def save_plots_proc(self, dpi=96, annot=False,
+                        extract_file=os.path.join('..', 'replic', 'data', 'obama2s.npy'),
                         lips_only=False):
         """ save line plots with Procrustes analysis """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
@@ -313,8 +334,8 @@ class Draw:
 
 class Video:
     """ Video processing """
-    def __init__(self, video_dir='../replic/video_in',
-                 audio_dir='../replic/audio_in',
+    def __init__(self, video_dir=os.path.join('..', 'replic', 'video_in'),
+                 audio_dir=os.path.join('..', 'replic', 'audio_in'),
                  frames=Frames()):
         super().__init__()
         self.video_dir = video_dir
