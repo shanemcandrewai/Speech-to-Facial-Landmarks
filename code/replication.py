@@ -112,16 +112,17 @@ class DataProcess:
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
-    def get_all_lmarks(self, new_extract=False, extract_file='../replic/data/obama2s.npy',
-                       dlib_proc=DlibProcess(), video=Video()):
+    def get_all_lmarks(self, new_extract=False,
+                       extract_file='../replic/data/obama2s.npy',
+                       dlib_proc=DlibProcess(), frames=Frames()):
         """ Get landmarks from face for all frames as ndarray """
         if new_extract:
             self.all_lmarks = None
         elif os.path.exists(extract_file):
             self.all_lmarks = np.load(extract_file)
-        if self.all_lmarks is None:
+        if self.all_lmarks.size == 0:
             if not frames.get_frame_nums():
-                video.extract_frames()
+                Video().extract_frames()
             for frame_num in frames.get_frame_nums():
                 self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
             Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
@@ -312,12 +313,13 @@ class Draw:
 
 class Video:
     """ Video processing """
-    def __init__(self, video_dir='../replic/video_in', audio_dir='../replic/audio_in',
+    def __init__(self, video_dir='../replic/video_in',
+                 audio_dir='../replic/audio_in',
                  frames=Frames()):
         super().__init__()
         self.video_dir = video_dir
         self.audio_dir = audio_dir
-        self.frames_dir = frames_dir
+        self.frames_dir = frames.frame_dir
 
     def extract_audio(self, video_in='obama2s.mp4',
                       audio_out=None):
@@ -337,18 +339,18 @@ class Video:
                 str(start_number), '-qscale:v', str(quality),
                 os.path.join(self.frames_dir, '%04d.jpeg')], check=True)
 
-    def crop(self, video_in='obama2s.mp4', video_out='obama_crop.mp4',
-             crop_param=None, draw=Draw()):
-        """ crop video """
-        if crop_param is None:
-            draw.get_all_lmarks()
-            crop_param = str(draw.bounds['width']) + ':' + str(
-                draw.bounds['height']) + ':' +  str(
-                    round(draw.bounds['xmid'] - draw.bounds['width']/2)) + ':' +  str(
-                        round(draw.bounds['ymid'] - draw.bounds['height']/2))
-        sp.run(['ffmpeg', '-i', video_in, '-filter:v',
-                'crop=' + crop_param, '-y',
-                os.path.join(self.video_dir, video_out)], check=True)
+#    def crop(self, video_in='obama2s.mp4', video_out='obama_crop.mp4',
+#             crop_param=None, draw=Draw()):
+#        """ crop video """
+#        if crop_param is None:
+#            draw.get_all_lmarks()
+#            crop_param = str(draw.bounds['width']) + ':' + str(
+#                draw.bounds['height']) + ':' +  str(
+#                    round(draw.bounds['xmid'] - draw.bounds['width']/2)) + ':' +  str(
+#                        round(draw.bounds['ymid'] - draw.bounds['height']/2))
+#        sp.run(['ffmpeg', '-i', video_in, '-filter:v',
+#                'crop=' + crop_param, '-y',
+#                os.path.join(self.video_dir, video_out)], check=True)
 
     def create_video(self, video_out='plots.mp4', plots_dir='plots', framerate=30):
         """ create video from images """
