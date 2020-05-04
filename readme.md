@@ -10,12 +10,10 @@ In addition to the dependencies of [Noise-Resilient Training Method](https://git
 
 ## Code Example
 
-The generation code has the following arguments:
 
-* -i --- Input folder containing speech files
-    * See [this](http://librosa.github.io/librosa/generated/librosa.core.load.html#librosa.core.load) link for supported audio formats.
-* -m --- Input pre-trained talking face landmarks model 
-* -o --- Output path
+
+In addition to those specified in [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), the generation script includes the following parameters -
+
 * -in --- Replicaton study Directory of predicted landmarks, by default `replic` 
 * -p --- Disable creation of plots and video
 
