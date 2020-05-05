@@ -172,9 +172,8 @@ class DataProcess:
         new_lmarks = np.zeros((len(new_frame_axis),) + (lmarks.shape[1:]))
         for ax1 in range(lmarks.shape[1]):
             for ax2 in range(lmarks.shape[2]):
-                for ax3 in range(lmarks.shape[3]):
-                    new_lmarks[:, ax1, ax2, ax3] = np.interp(new_frame_axis, old_frame_axis,
-                                                             lmarks[:, ax1, ax2, ax3])
+                new_lmarks[:, ax1, ax2] = np.interp(new_frame_axis, old_frame_axis,
+                                                    lmarks[:, ax1, ax2])
         return new_lmarks
 
     def get_closed_mouth_frame(self, extract_file=None, lmarks=None):
@@ -373,7 +372,8 @@ class Video:
 #                'crop=' + crop_param, '-y',
 #                os.path.join(self.video_dir, video_out)], check=True)
 
-    def create_video(self, video_out='plots.mp4', plots_dir='plots', framerate=30):
+    def create_video(self, video_out='plots.mp4', plots_dir=os.path.join('..', 'replic', 'plots'),
+                     framerate=30):
         """ create video from images """
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
                 os.path.join(os.path.join(plots_dir, '%d.png')),
@@ -402,11 +402,3 @@ class Video:
         sp.run(['ffmpeg', '-i', video_in, '-s', str(width) + 'x' + str(height),
                 '-c:a', 'copy', '-y',
                 os.path.join(self.video_dir, video_out)], check=True)
-
-class Process:
-    """ User process flows """
-    def __init__(self, video_in='obama2s.mp4'):
-        self.video_in = video_in
-
-    def extract(self):
-        """ extract landmarks from video, normalise and save to file """
