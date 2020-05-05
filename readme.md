@@ -15,11 +15,13 @@ In addition to the dependencies of [Noise-Resilient Training Method](https://git
 In addition to those specified in [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), the generation script includes the following parameters -
 
 * `-r --replication_folder` Replication study folder for predicted landmarks, by default `replic` 
-* `-p --predict_only` Disable creation of plots and video and save the predicted landmarks in the replication study folder
+* `-lf --load_prediction_file` File to load if `-l` load prediction flag is set, by default `../replic/data/ob25.npy` 
+* `-s --save_prediction` Disable creation of plots and video and save the predicted landmarks in the replication study folder
+* `-l --load_prediction` Load prediction from the specified by the `-lf` parameter
 
 You can run the following code to test the system:
 
 ```
-python generate.py -i ../speech_samples/ -m ../pre_trained/1D_CNN.pt -o ../results/1D_CNN/ -p
+python generate.py -i ../speech_samples/ -m ../pre_trained/1D_CNN.pt -o ../results/1D_CNN/ -s
 ```
 

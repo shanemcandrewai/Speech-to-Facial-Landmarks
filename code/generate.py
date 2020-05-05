@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import shutil
 from pathlib import Path
 
@@ -16,8 +17,11 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("-i", "--in-folder", type=str, help="input speech folder", required=True)
 parser.add_argument("-m", "--model", type=str, help="Pre-trained model", required=True)
 parser.add_argument("-o", "--out-fold", type=str, help="output folder", required=True)
-parser.add_argument("-r", "--replication_folder", type=str, help="Replication study folder",
-                    default="../replic")
+parser.add_argument("-r", "--replication_folder", type=str,
+                    help="Replication study folder", default="../replic")
+parser.add_argument("-lf", "--load_prediction_file", type=str,
+                    help="File to load if -l load prediction flag is set",
+                    default="../replic/data/ob25.npy")
 
 parser.add_argument("--mean_shape", type=str, help="PCA mean shape vector npy file path", default="../data/mean_shape.npy")
 parser.add_argument("--eigen_vectors", type=str, help="PCA eigen vectors npy file path", default="../data/eigen_vectors.npy")
@@ -25,7 +29,11 @@ parser.add_argument("--template_shape", type=str, help="Template face npy file p
 parser.add_argument("-n", "--num-frames", type=int, help="Number of frames", default=7)
 parser.add_argument("--temporal_condition", action="store_true")
 parser.add_argument("--tcboost", type=str, help="Boost coefficients for autoregressive model", default="../data/tcboost.npy")
-parser.add_argument("-p", "--predict_only", action="store_true") #Disable creation of plots and video
+parser.add_argument("-s", "--save_prediction", help='Save prediction in the'
+                    'replication folder, disable creation of plots and video',
+                    action="store_true") 
+parser.add_argument("-l", "--load_prediction", help='Load prediction from the'
+                    'specified by the -lf parameter', action="store_true") 
 
 args = parser.parse_args()
 pca_mean_vector = np.load(args.mean_shape)
@@ -86,12 +94,19 @@ def generateFace(root, filename):
         predicted = np.reshape(predicted, (predicted.shape[0], int(predicted.shape[1]/3), 3))
 
     # Save replication study data
-    if args.predict_only:
+    if args.save_prediction:
         out_dir = os.path.join(args.replication_folder, filename)
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         np.save(os.path.join(out_dir, 'predicted.npy'), predicted)
         np.save(os.path.join(out_dir, 'speech_orig.npy'), speech_orig)
     else:
+        if args.load_prediction:
+            predicted = np.load(args.load_prediction_file)
+            out_dir = os.path.join(args.replication_folder, filename)
+            Path(out_dir).mkdir(parents=True, exist_ok=True)
+            fp = facePainter(predicted, speech_orig, fs=sr)
+            fp.paintFace(out_dir, os.path.splitext(filename)[0]+'_painted')
+            sys.exit()
         # 2D video with painted face
         fp = facePainter(predicted, speech_orig, fs=sr)
         fp.paintFace(output_path, os.path.splitext(filename)[0]+'_painted')
