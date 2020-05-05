@@ -14,8 +14,8 @@ In addition to the dependencies of [Noise-Resilient Training Method](https://git
 
 In addition to those specified in [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), the generation script includes the following parameters -
 
-* -in --- Replicaton study Directory of predicted landmarks, by default `replic` 
-* -p --- Disable creation of plots and video and save the predicted landmarks to the replication study directory
+* -r --replication_folder: Replication study folder for predicted landmarks, by default `replic` 
+* -p --predict_only: Disable creation of plots and video and save the predicted landmarks in the replication study folder
 
 You can run the following code to test the system:
 

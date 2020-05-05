@@ -126,7 +126,7 @@ class DataProcess:
             self.all_lmarks = np.load(extract_file)
         if self.all_lmarks.size == 0:
             if not frames.get_frame_nums():
-                Video().extract_frames()
+                Video().extract_frames(os.path.splitext(os.path.split(extract_file)[1])[0] + '.mp4')
             for frame_num in frames.get_frame_nums():
                 self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
             Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
