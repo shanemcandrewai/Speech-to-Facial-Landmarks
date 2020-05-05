@@ -103,7 +103,6 @@ def generateFace(root, filename):
         if args.load_prediction:
             predicted = np.load(args.load_prediction_file)
             out_dir = os.path.join(args.replication_folder, filename)
-            Path(out_dir).mkdir(parents=True, exist_ok=True)
             fp = facePainter(predicted, speech_orig, fs=sr)
             fp.paintFace(out_dir, os.path.splitext(filename)[0]+'_painted')
             sys.exit()
