@@ -99,7 +99,7 @@ def generateFace(root, filename):
     if args.save_prediction:
         save_prediction(filename, predicted, speech_orig)
     else:
-        if args.load_prediction:
+        if args.load_prediction_and_paint:
             load_prediction_and_paint(predicted, speech_orig, sr)
 
         # 2D video with painted face
