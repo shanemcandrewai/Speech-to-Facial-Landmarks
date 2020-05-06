@@ -214,8 +214,8 @@ class Draw:
         self.axes = None
         self.bounds = {'width': width, 'height': height,
                        'mid': np.nanmean(lmarks, 0),
-                       'xmid': np.nanmean(lmarks[:, 0]),
-                       'ymid': np.nanmean(lmarks[:, 0])}
+                       'xmid': np.nanmean(lmarks[..., 0]),
+                       'ymid': np.nanmean(lmarks[..., 1])}
 
     def _plot_features(self, lmarks, frame_num=0):
         """ calculate and plot facial features """
@@ -292,7 +292,7 @@ class Draw:
                 self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
         plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
-    def save_plots(self, with_frame=True, dpi=96):
+    def save_plots(self, with_frame=True, annot=False, dpi=96):
         """ save line plots """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
@@ -309,7 +309,18 @@ class Draw:
             self.axes.set_ylim(self.bounds['ymid'] - (self.bounds['height']/2),
                                self.bounds['ymid'] + (self.bounds['height']/2))
             self.axes.invert_yaxis()
+            if annot:
+                self.annotate(frame_num, lmarks)
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
+
+    def annotate(self, frame_num, lmarks):
+        """ Annote image with landmark and frame numbers """
+        self.axes.annotate('Frame: ' + str(frame_num), xy=(
+            self.axes.get_xlim()[0] + 0.01, self.axes.get_ylim(
+                )[0] - 0.01), color='blue')
+        for lmark_num, (point_x, point_y) in enumerate(
+                lmarks[frame_num]):
+            self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
 
     def save_plots_proc(self, dpi=96, annot=False,
                         extract_file=os.path.join('..', 'replic', 'data',
@@ -328,12 +339,7 @@ class Draw:
             self._plot_features(lmarks, frame_num)
             self.axes.invert_yaxis()
             if annot:
-                self.axes.annotate('Frame: ' + str(frame_num), xy=(
-                    self.axes.get_xlim()[0] + 0.01, self.axes.get_ylim(
-                        )[0] - 0.01), color='blue')
-                for lmark_num, (point_x, point_y) in enumerate(
-                        lmarks[frame_num]):
-                    self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
+                self.annotate(frame_num, lmarks)
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
 class Video:
@@ -363,19 +369,6 @@ class Video:
         sp.run(['ffmpeg', '-i', os.path.join(self.video_dir, video_in), '-start_number',
                 str(start_number), '-qscale:v', str(quality),
                 os.path.join(self.frames_dir, '%04d.jpeg')], check=True)
-
-#    def crop(self, video_in='obama2s.mp4', video_out='obama_crop.mp4',
-#             crop_param=None, draw=Draw()):
-#        """ crop video """
-#        if crop_param is None:
-#            draw.get_all_lmarks()
-#            crop_param = str(draw.bounds['width']) + ':' + str(
-#                draw.bounds['height']) + ':' +  str(
-#                    round(draw.bounds['xmid'] - draw.bounds['width']/2)) + ':' +  str(
-#                        round(draw.bounds['ymid'] - draw.bounds['height']/2))
-#        sp.run(['ffmpeg', '-i', video_in, '-filter:v',
-#                'crop=' + crop_param, '-y',
-#                os.path.join(self.video_dir, video_out)], check=True)
 
     def create_video(self, video_out='plots.mp4', plots_dir=os.path.join('..', 'replic', 'plots'),
                      framerate=30):
