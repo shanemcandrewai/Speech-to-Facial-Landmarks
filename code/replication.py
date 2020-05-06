@@ -333,8 +333,8 @@ class Draw:
 
 class Video:
     """ Video processing """
-    def __init__(self, video_dir=os.path.join('..', 'replic', 'video_in'),
-                 audio_dir=os.path.join('..', 'replic', 'audio_in'),
+    def __init__(self, video_dir=os.path.join('..', 'replic', 'video'),
+                 audio_dir=os.path.join('..', 'replic', 'audio'),
                  frames=Frames()):
         super().__init__()
         self.video_dir = video_dir
@@ -380,8 +380,9 @@ class Video:
                 '-y', os.path.join(os.path.join(self.video_dir, video_out))],
                check=True)
 
-    def combine_h(self, video_left='obama_paint.mp4', video_right='plots.mp4',
-                  video_out='obama_h.mp4'):
+    def combine_h(self, video_left='ob25_painted_.mp4',
+                  video_right='obama2s_painted_.mp4',
+                  video_out='obama2s_comparison.mp4'):
         """ stack videos horizontally """
         sp.run(['ffmpeg', '-i', os.path.join(self.video_dir, video_left), '-i',
                 os.path.join(self.video_dir, video_right), '-filter_complex',
