@@ -12,5 +12,4 @@ __pycache__/
 # project folders
 code/__pycache__/
 results/
-replic/
 data/shape_predictor_68_face_landmarks.dat
