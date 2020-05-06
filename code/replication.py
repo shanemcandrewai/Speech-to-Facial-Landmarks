@@ -54,7 +54,8 @@ class DlibProcess:
         self.frame_num = None
         self.faces = None
         self.shape = None
-        self.model_file = os.path.join(model_dir, os.path.splitext(os.path.split(model_url)[1])[0])
+        self.model_file = os.path.join(model_dir, os.path.splitext(
+            os.path.split(model_url)[1])[0])
         if not os.path.isfile(self.model_file):
             print('Model ' + self.model_file + ' not found')
             print('Downloading from ' + model_url)
@@ -211,8 +212,10 @@ class Draw:
         self.data_proc = data_proc
         lmarks = data_proc.get_all_lmarks()
         self.axes = None
-        self.bounds = {'width': width, 'height': height, 'mid': np.nanmean(lmarks, 0),
-                       'xmid': np.nanmean(lmarks[:, 0]), 'ymid': np.nanmean(lmarks[:, 0])}
+        self.bounds = {'width': width, 'height': height,
+                       'mid': np.nanmean(lmarks, 0),
+                       'xmid': np.nanmean(lmarks[:, 0]),
+                       'ymid': np.nanmean(lmarks[:, 0])}
 
     def _plot_features(self, lmarks, frame_num=0):
         """ calculate and plot facial features """
@@ -260,9 +263,11 @@ class Draw:
             for frame_num in range(lmarks.shape[0]):
                 self.save_scatter_frame(frame_num, lmarks, with_frame, annot=annot)
         else:
-            self.save_scatter_frame(frame_num_sel, lmarks[frame_num_sel], with_frame, annot=annot)
+            self.save_scatter_frame(frame_num_sel, with_frame=with_frame,
+                                    annot=annot)
 
-    def save_scatter_frame(self, frame_num=30, lmarks=None, with_frame=True, annot=False):
+    def save_scatter_frame(self, frame_num=30, lmarks=None, with_frame=True,
+                           annot=False):
         """ Plot landmarks and save frame """
         self.axes.clear()
         if lmarks is None:
@@ -307,8 +312,8 @@ class Draw:
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
     def save_plots_proc(self, dpi=96, annot=False,
-                        extract_file=os.path.join('..', 'replic', 'data', 'obama2s.npy'),
-                        lips_only=False):
+                        extract_file=os.path.join('..', 'replic', 'data',
+                                                  'obama2s.npy'), lips_only=False):
         """ save line plots with Procrustes analysis """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
