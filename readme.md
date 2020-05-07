@@ -31,8 +31,23 @@ Load landmarks from an external file in `../replic/samples/files_in/` and genera
 
 Eskimez et al. released pre-trained models and the generation script with the express aim of promoting scientific reproducibility; however the tools for achieving this were not included. The [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) is an attempt to fill this gap.
 
+### Classes
+#### Video
+manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpeg.org/)
+##### Example usage
+Extract frames from `replic/samples/obama2s.mp4` into `replic/frames`
+    python -c "from replication import *; Video('../replic/samples/', frames=Frames('../replic/frames')).extract_frames('obama2s.mp4')"
+#### Frames
+Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
+#### DlibProcess
+manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
+#### DataProcess
+calculations and supporting methods required for the replication of experiments
+#### Draw
+manages this plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
+
 ## Potential adaptation to other models
-The [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) could be adapted to other models besides those created by Eskimez at al.
+The [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) could be adapted to other models besides those created by Eskimez at al. The model's inferred landmarks must be saved in NPY format file with axes - frame number, landmark number, and coordinates such as [this example](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/replic/samples/obama2s.npy).
 
 ## Prerequisites
 

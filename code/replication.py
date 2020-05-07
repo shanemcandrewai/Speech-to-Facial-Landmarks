@@ -347,7 +347,6 @@ class Video:
     def __init__(self, video_dir=os.path.join('..', 'replic', 'video'),
                  audio_dir=os.path.join('..', 'replic', 'audio'),
                  frames=Frames()):
-        super().__init__()
         self.video_dir = video_dir
         self.audio_dir = audio_dir
         self.frames_dir = frames.frame_dir
