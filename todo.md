@@ -1,4 +1,5 @@
 TODO list
 =========
 
-* Update readme with description of replication.py and following sections
+* fix method get_closed_mouth_frame
+* fix method remove_identity
