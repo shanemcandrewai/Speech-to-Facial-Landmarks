@@ -1,6 +1,5 @@
 import argparse
 import os
-import sys
 import shutil
 from pathlib import Path
 
@@ -14,16 +13,9 @@ from copy import deepcopy
 from model import SPCH2FLM, SPCH2FLMTC
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("-i", "--in-folder", type=str, help="input speech folder", required=True)
+parser.add_argument("-i", "--in-folder", type=str, help="input speech folder and optionally the prediction file if -l used", required=True)
 parser.add_argument("-m", "--model", type=str, help="Pre-trained model", required=True)
 parser.add_argument("-o", "--out-fold", type=str, help="output folder", required=True)
-parser.add_argument("-rd", "--replication_data_folder", type=str,
-                    help="Replication study data folder", default="../replic/data")
-parser.add_argument("-rv", "--replication_video_folder", type=str,
-                    help="Replication study video folder", default="../replic/video_out")
-parser.add_argument("-lf", "--load_prediction_file", type=str,
-                    help="File to load if -l load prediction flag is set",
-                    default="../replic/data/ob25.npy")
 
 parser.add_argument("--mean_shape", type=str, help="PCA mean shape vector npy file path", default="../data/mean_shape.npy")
 parser.add_argument("--eigen_vectors", type=str, help="PCA eigen vectors npy file path", default="../data/eigen_vectors.npy")
@@ -32,10 +24,10 @@ parser.add_argument("-n", "--num-frames", type=int, help="Number of frames", def
 parser.add_argument("--temporal_condition", action="store_true")
 parser.add_argument("--tcboost", type=str, help="Boost coefficients for autoregressive model", default="../data/tcboost.npy")
 parser.add_argument("-s", "--save_prediction", help='Save prediction in the'
-                    ' replication study data folder, disable creation of plots and video',
-                    action="store_true") 
-parser.add_argument("-l", "--load_prediction_and_paint", help='Load prediction from the specified'
-                    ' by the -lf command-line option and generate painted video',
+                    ' output folder and disable creation of animation',
+                    action="store_true")
+parser.add_argument("-l", "--load_prediction", help='Load prediction'
+                    ' file from the input speech folder and generate painted animation',
                     action="store_true")
 
 args = parser.parse_args()
@@ -98,33 +90,31 @@ def generateFace(root, filename):
 
     if args.save_prediction:
         save_prediction(filename, predicted, speech_orig)
-    else:
-        if args.load_prediction_and_paint:
-            load_prediction_and_paint(predicted, speech_orig, sr)
+        return
+    if args.load_prediction:
+        predicted = load_prediction(filename)
 
-        # 2D video with painted face
-        fp = facePainter(predicted, speech_orig, fs=sr)
-        fp.paintFace(output_path, os.path.splitext(filename)[0]+'_painted')
+    # 2D video with painted face
+    fp = facePainter(predicted, speech_orig, fs=sr)
+    fp.paintFace(output_path, os.path.splitext(filename)[0]+'_painted')
 
-        # 3D video with connected lines
-        utils.write_video3D(predicted, speech_orig, sr, output_path, os.path.splitext(filename)[0]+'_3D', [-0.2, 0.2], [-0.2, 0.2], [-0.2, 0.2], 25)
+    if predicted.shape[2] < 3: #exit loop if coordinates have less than 3 dimensions
+        return
+
+    # 3D video with connected lines
+    utils.write_video3D(predicted, speech_orig, sr, output_path, os.path.splitext(filename)[0]+'_3D', [-0.2, 0.2], [-0.2, 0.2], [-0.2, 0.2], 25)
 
 def save_prediction(file_name, predicted, speech_orig):
-    """ save predicted landmarks and speech vector to the replication data folder """
-    out_dir = os.path.join(args.replication_data_folder, file_name)
+    """ save predicted landmarks and speech vector to the output folder """
+    out_dir = os.path.join(args.out_fold, file_name)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     np.save(os.path.join(out_dir, 'predicted.npy'), predicted)
     np.save(os.path.join(out_dir, 'speech_orig.npy'), speech_orig)
 
-def load_prediction_and_paint(predicted, speech_orig, sr):
-    """ load predicted landmarks from the file specified by the -lf command-line option
-        and generated painted video """
-    file_name = os.path.split(args.load_prediction_file)[1]
-    Path(args.replication_video_folder).mkdir(parents=True, exist_ok=True)
-    predicted = np.load(args.load_prediction_file)
-    fp = facePainter(predicted, speech_orig, fs=sr)
-    fp.paintFace(args.replication_video_folder, os.path.splitext(file_name)[0]+'_painted')
-    sys.exit()
+def load_prediction(file_name):
+    """ load predicted landmarks from the input speech folder """
+    prediction_file = os.path.join(args.in_folder, os.path.splitext(file_name)[0] + '.npy')
+    return np.load(prediction_file)
 
 output_path = args.out_fold
 num_frames = args.num_frames 
