@@ -46,7 +46,7 @@ class Frames:
 
     def count_frames(self):
         """ count number of frames in directory """
-        print(len(self.get_frame_nums()))
+        return len(self.get_frame_nums())
 
 class DlibProcess:
     """ Extract landmarks from frames using Dlib """

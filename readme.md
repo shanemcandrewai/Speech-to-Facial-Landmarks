@@ -42,23 +42,28 @@ Helper class used to manage a folder of frames extracted from source video. Each
 #### Example usage
 Count number frames in `../replic/frames`
 
-    python -c "from replication import *; Frames('../replic/frames').count_frames()"
+    python -c "from replication import *; print(Frames('../replic/frames').count_frames())"
 ### class DlibProcess:
-manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
+Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
 #### Example usage
 Extract landmarks from Frame 30 and overlay the frame image with corresponding line plots
 
     python -c "from replication import *; DlibProcess().display_overlay(frame_num=30)"
 ### class DataProcess:
-calculations and supporting methods required for the replication of experiments
+Calculations and supporting methods required for the replication of experiments
+#### Example usage
+Calculate the frame number with the minimum distance between the two lips
+
+    python -c "from replication import *; print(DataProcess('../replic/data/obama2s.npy').get_closed_mouth_frame())"
 ### class Draw:
-manages this plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
+Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
+#### Example usage
+Use [procrustes analysis](https://link.springer.com/article/10.1007/BF02291478) to align and normalise landmarks, plot and save them in `replic/plots`
+
+    python -c "from replication import *; Draw('../replic/plots').save_plots_proc(annot=True, extract_file='../replic/samples/obama2s.npy')"
 
 ## Potential adaptation to other models
 The [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) could be adapted to other models besides those created by Eskimez at al. The model's inferred landmarks must be saved in NPY format file with three axes - frame number, landmark number, and coordinates such as [this example](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/replic/samples/obama2s.npy).
 
 ## Prerequisites
-
 In addition to the dependencies of [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), [FFmpeg](https://www.ffmpeg.org/) must be executable from the directory of the [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py)
-
-
