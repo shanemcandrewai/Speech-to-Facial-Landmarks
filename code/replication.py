@@ -44,12 +44,8 @@ class Frames:
         frames = self.get_frame_file_names()
         return [self.get_frame_num(frame) for frame in frames]
 
-    def count_frames(self):
-        """ count number of frames in directory """
-        return len(self.get_frame_nums())
-
 class DlibProcess:
-    """ Extract landmarks from frames using Dlib """
+    """ Dlib facial landmark extraction manager """
     def __init__(self, rgb_image=None, model_dir=os.path.join('..', 'data'),
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
                  'shape_predictor_68_face_landmarks.dat.bz2'):
@@ -113,7 +109,7 @@ class DlibProcess:
         dlib.hit_enter_to_continue()
 
 class DataProcess:
-    """ Plots for landmarks """
+    """ Calculations and supporting methods required for the replication of experiments """
     def __init__(self, extract_file=os.path.join('..', 'replic', 'data', 'obama2s.npy')):
         self.extract_file = extract_file
         self.axes = None
@@ -347,7 +343,7 @@ class Draw:
             plt.savefig(os.path.join(self.plots_dir, str(frame_num) + '.png'))
 
 class Video:
-    """ Video processing """
+    """ FFmpeg video processing manager """
     def __init__(self, video_dir=os.path.join('..', 'replic', 'video'),
                  audio_dir=os.path.join('..', 'replic', 'audio'),
                  frames=Frames()):

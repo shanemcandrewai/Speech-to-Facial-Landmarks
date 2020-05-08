@@ -40,9 +40,9 @@ Extract frames from `replic/samples/obama2s.mp4` into `replic/frames`
 ### class Frames:
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
 #### Example usage
-Count number frames in `../replic/frames`
+Get frame numbers from `../replic/frames`
 
-    python -c "from replication import *; print(Frames('../replic/frames').count_frames())"
+    python -c "from replication import *; print(Frames('../replic/frames').get_frame_nums())"
 ### class DlibProcess:
 Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
 #### Example usage
