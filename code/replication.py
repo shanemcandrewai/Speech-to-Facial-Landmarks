@@ -108,6 +108,7 @@ class DlibProcess:
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
     def __init__(self, extract_dir=Path('..', 'replic', 'data')):
+        extract_dir.mkdir(parents=True, exist_ok=True)
         self.extract_dir = extract_dir
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
@@ -118,18 +119,17 @@ class DataProcess:
         """ Get landmarks from face for all frames as ndarray """
         if new_extract:
             self.all_lmarks = None
-        elif Path(self.extract_dir, extract_file):
+        elif Path(self.extract_dir, extract_file).is_file():
             self.all_lmarks = np.load(extract_file)
         if self.all_lmarks.size == 0:
             if not frames.get_frame_nums():
-                Video(extract_file.parent).extract_frames(os.path.splitext(os.path.split(extract_file)[1])[0] + '.mp4')
+                Video().extract_frames(extract_file.with_suffix('.mp4'))
             for frame_num in frames.get_frame_nums():
                 self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
-            Path(os.path.split(extract_file)[0]).mkdir(parents=True, exist_ok=True)
             np.save(extract_file, self.all_lmarks)
         return self.all_lmarks
 
-    def filter_outliers(self, zscore=4, extract_file=None):
+    def filter_outliers(self, zscore=4, extract_file=Path('obama2s.npy')):
         """ replace outliers greater than specified zscore with np.nan) """
         if extract_file is None:
             extract_file = self.extract_file
