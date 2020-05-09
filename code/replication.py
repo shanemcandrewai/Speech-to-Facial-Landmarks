@@ -15,7 +15,7 @@ class Frames:
     def __init__(self, frame_dir=Path('..', 'replic', 'frames'),
                  extension='jpeg', num_len=4):
         self.frame_dir = frame_dir
-        Path(frame_dir).mkdir(parents=True, exist_ok=True)
+        frame_dir.mkdir(parents=True, exist_ok=True)
         self.extension = extension
         self.num_len = num_len
         self.frame_num = None
@@ -24,10 +24,10 @@ class Frames:
     def get_file_path(self, frame_num=30):
         """ Build file path from frame number """
         self.frame_num = frame_num
-        self.file_name = (str(frame_num).zfill(self.num_len) + '.' + self.extension)
+        self.file_name = str(frame_num).zfill(self.num_len) + '.' + self.extension
         return Path(self.frame_dir, self.file_name)
 
-    def get_frame_num(self, file_name=Path('..', 'replic', 'frames', '0030.jpeg')):
+    def get_frame_num(self, file_name=Path('0030.jpeg')):
         """ Derive frame number from image file name """
         self.file_name = file_name
         self.frame_num = int(file_name.stem)
@@ -35,8 +35,8 @@ class Frames:
 
     def get_frame_file_names(self):
         """ Get list of frame files """
-        return sorted(glob.glob(Path(self.frame_dir, '*.' +
-                                     self.extension)))
+        return sorted(self.frame_dir.glob('*.' + self.extension))
+
     def get_frame_nums(self):
         """ Get list of frame numbers """
         frames = self.get_frame_file_names()
@@ -45,16 +45,15 @@ class Frames:
 class DlibProcess:
     """ Dlib facial landmark extraction manager """
     def __init__(self, rgb_image=None, model_dir=Path('..', 'data'),
-                 model_url=Path('https://raw.github.com/davisking/'
-                                'dlib-models/master/'
-                                'shape_predictor_68_face_landmarks.dat.bz2')):
+                 model_url='https://raw.github.com/davisking/dlib-models/master/'
+                           'shape_predictor_68_face_landmarks.dat.bz2'):
         self.detector = dlib.get_frontal_face_detector()
         self.rgb_image = rgb_image
         self.frame_num = None
         self.faces = None
         self.shape = None
-        self.model_file = Path(model_dir, model_url.stem)
-        if not Path.is_file(self.model_file):
+        self.model_file = Path(model_dir, Path(model_url).stem)
+        if not self.model_file.is_file():
             print('Model ' + self.model_file + ' not found')
             print('Downloading from ' + model_url)
             with urllib.request.urlopen(model_url) as response, open(
@@ -67,7 +66,7 @@ class DlibProcess:
         self.faces = None
         self.shape = None
         image_file_path = frames.get_file_path(frame_num)
-        self.rgb_image = dlib.load_rgb_image(image_file_path)
+        self.rgb_image = dlib.load_rgb_image(str(image_file_path))
         if self.rgb_image is not None:
             self.frame_num = frame_num
             print('Frame ', frame_num, ' extracting faces')
@@ -93,11 +92,11 @@ class DlibProcess:
             return np.full((1, 68, 2), np.nan)
         return np.array([(part.x, part.y) for part in self.shape.parts()]).reshape((1, 68, 2))
 
-    def display_overlay(self, image_file=None, frame_num=30):
+    def display_overlay(self, image_file=Path(), frame_num=30):
         """ Display image overlayed with landmarks """
         win = dlib.image_window()
         win.clear_overlay()
-        if image_file is None:
+        if image_file == Path():
             self.load_image(frame_num)
         else:
             self.rgb_image = dlib.load_rgb_image(image_file)
@@ -108,20 +107,18 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, extract_file=Path('..', 'replic', 'data', 'obama2s.npy')):
-        self.extract_file = extract_file
+    def __init__(self, extract_dir=Path('..', 'replic', 'data')):
+        self.extract_dir = extract_dir
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
     def get_all_lmarks(self, new_extract=False,
-                       extract_file=None,
+                       extract_file=Path('obama2s.npy'),
                        dlib_proc=DlibProcess(), frames=Frames()):
         """ Get landmarks from face for all frames as ndarray """
-        if extract_file is None:
-            extract_file = self.extract_file
         if new_extract:
             self.all_lmarks = None
-        elif Path.exists(extract_file):
+        elif Path(self.extract_dir, extract_file):
             self.all_lmarks = np.load(extract_file)
         if self.all_lmarks.size == 0:
             if not frames.get_frame_nums():
