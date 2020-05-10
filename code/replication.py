@@ -97,7 +97,7 @@ class DlibProcess:
         win = dlib.image_window()
         win.clear_overlay()
         self.load_image(frame_num)
-        win.set_image(self.load_image(frame_num))
+        win.set_image(self.rgb_image)
         if self.get_shape(frame_num) is not None:
             win.add_overlay(self.shape)
         dlib.hit_enter_to_continue()
@@ -188,14 +188,18 @@ class DataProcess:
 class Draw:
     """ Draw landmarks with matplotlib """
     def __init__(self, plots_dir=Path('..', 'replic', 'plots'),
-                 data_proc=DataProcess(), width=500, height=500):
+                 data_proc=DataProcess(), dimensions=None, frames=Frames()):
         self.plots_dir = Path(plots_dir)
         self.plots_dir.mkdir(parents=True, exist_ok=True)
         self.data_proc = data_proc
+        if dimensions is None:
+            self.dimensions = {'width': 500, 'height': 500}
+        else:
+            self.dimensions = dimensions
+        self.frames = frames
         lmarks = data_proc.get_all_lmarks()
         self.axes = None
-        self.bounds = {'width': width, 'height': height,
-                       'mid': np.nanmean(lmarks, 0),
+        self.bounds = {'mid': np.nanmean(lmarks, 0),
                        'xmid': np.nanmean(lmarks[..., 0]),
                        'ymid': np.nanmean(lmarks[..., 1])}
 
@@ -255,7 +259,7 @@ class Draw:
         if lmarks is None:
             lmarks = self.data_proc.get_all_lmarks()
         if with_frame:
-            image = plt.imread(Frames().get_file_path(frame_num))
+            image = plt.imread(self.frames.get_file_path(frame_num))
             self.axes.imshow(image)
         frame_left = self.bounds['xmid'] - self.bounds['width']/2
         frame_right = self.bounds['xmid'] + self.bounds['width']/2
@@ -282,7 +286,7 @@ class Draw:
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             if with_frame:
-                image = plt.imread(Frames().get_file_path(frame_num))
+                image = plt.imread(self.frames.get_file_path(frame_num))
                 self.axes.imshow(image)
 
             self._plot_features(lmarks, frame_num)
@@ -330,7 +334,7 @@ class Video:
                  frames=Frames()):
         self.video_dir = Path(video_dir)
         self.audio_dir = Path(audio_dir)
-        self.frames_dir = frames.frame_dir
+        self.frames_dir = Path(frames.frame_dir)
 
     def extract_audio(self, video_in='obama2s.mp4',
                       audio_out=None):
@@ -343,12 +347,12 @@ class Video:
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
-        if Path(self.frames_dir).is_dir():
+        if self.frames_dir.is_dir():
             shutil.rmtree(self.frames_dir)
-        Path(self.frames_dir).mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-start_number',
-                str(start_number), '-qscale:v', str(quality),
-                Path(self.frames_dir, '%04d.jpeg')], check=True)
+        self.frames_dir.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)),
+                '-start_number', str(start_number), '-qscale:v', str(quality),
+                str(Path(self.frames_dir, r'%04d.jpeg'))], check=True)
 
     def create_video(self, video_out='plots.mp4', plots_dir=Path('..', 'replic', 'plots'),
                      framerate=30):

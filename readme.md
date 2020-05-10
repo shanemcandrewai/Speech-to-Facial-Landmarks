@@ -54,7 +54,7 @@ Calculations and supporting methods required for the replication of experiments
 #### Example usage
 Calculate the frame number with the minimum distance between the two lips
 
-    python -c "from replication import *; print(DataProcess('../replic/data/obama2s.npy').get_closed_mouth_frame())"
+    python -c "from replication import *; print(DataProcess('../replic/data').get_closed_mouth_frame('obama2s.npy'))"
 ### class Draw:
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage
