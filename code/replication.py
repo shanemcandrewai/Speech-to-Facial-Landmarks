@@ -12,14 +12,17 @@ import dlib
 
 class Frames:
     """ Frame file manager """
-    def __init__(self, frame_dir=Path('..', 'replic', 'frames'),
-                 suffix='.jpeg', num_len=4):
-        self.frame_dir = Path(frame_dir)
+    def __init__(self, frame_dir=None, suffix='.jpeg', num_len=4):
+        if frame_dir is None:
+            self.frame_dir = Path('..', 'replic', 'frames')
+        else:
+            self.frame_dir = Path(frame_dir)
         self.frame_dir.mkdir(parents=True, exist_ok=True)
         self.suffix = suffix
         self.num_len = num_len
         self.frame_num = None
         self.file_name = None
+        print('Frames')
 
     def get_file_path(self, frame_num=30):
         """ Build file path from frame number """
@@ -44,15 +47,18 @@ class Frames:
 
 class DlibProcess:
     """ Dlib facial landmark extraction manager """
-    def __init__(self, model_dir=Path('..', 'data'),
+    def __init__(self, model_dir=None,
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
                            'shape_predictor_68_face_landmarks.dat.bz2'):
+        if model_dir is None:
+            self.model_file = Path(Path('..', 'data'), Path(model_url).stem)
+        else:
+            self.model_file = Path(model_dir, Path(model_url).stem)
         self.detector = dlib.get_frontal_face_detector()
         self.rgb_image = None
         self.frame_num = None
         self.faces = None
         self.shape = None
-        self.model_file = Path(model_dir, Path(model_url).stem)
         if not self.model_file.is_file():
             print('Model ' + self.model_file + ' not found')
             print('Downloading from ' + model_url)
@@ -61,11 +67,14 @@ class DlibProcess:
                 model.write(bz2.decompress(response.read()))
         self.predictor = dlib.shape_predictor(str(self.model_file))
 
-    def load_image(self, frame_num=30, frames=Frames()):
+    def load_image(self, frame_num=30, frames=None):
         """ load image and attempt to extract faces """
+        if frames is None:
+            image_file_path = Frames().get_file_path(frame_num)
+        else:
+            image_file_path = frames.get_file_path(frame_num)
         self.faces = None
         self.shape = None
-        image_file_path = frames.get_file_path(frame_num)
         self.rgb_image = dlib.load_rgb_image(str(image_file_path))
         if self.rgb_image is not None:
             self.frame_num = frame_num
@@ -104,16 +113,23 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, extract_dir=Path('..', 'replic', 'data')):
-        self.extract_dir = Path(extract_dir)
+    def __init__(self, extract_dir=None):
+        if extract_dir is None:
+            self.extract_dir = Path('..', 'replic', 'data')
+        else:
+            self.extract_dir = Path(extract_dir)
         self.extract_dir.mkdir(parents=True, exist_ok=True)
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
     def get_all_lmarks(self, new_extract=False,
                        extract_file='obama2s.npy',
-                       dlib_proc=DlibProcess(), frames=Frames()):
+                       dlib_proc=None, frames=None):
         """ Get landmarks from face for all frames as ndarray """
+        if dlib_proc is None:
+            dlib_proc = DlibProcess()
+        if frames is None:
+            frames = Frames()
         if new_extract:
             self.all_lmarks = None
         elif Path(self.extract_dir, extract_file).is_file():
@@ -177,26 +193,37 @@ class DataProcess:
         diff_vert_total = (diff_squared_vert[:, 0] + diff_squared_vert[:, 1])
         return np.nanargmin(np.sum(diff_vert_total, -1))
 
-    def remove_identity(self, extract_file='obama2s.npy',
-                        template=Path('..', 'data', 'mean.npy')):
+    def remove_identity(self, extract_file='obama2s.npy', template=None):
         """ current frame - the closed mouth frame + template """
+        if template is None:
+            template = Path('..', 'data', 'mean.npy')
         lmarks = self.interpolate_lmarks(extract_file=extract_file).reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
-        template_2d = np.load(template)[:, :2]
+        template_2d = np.load(str(template))[:, :2]
         return lmarks - closed_mouth + template_2d
 
 class Draw:
     """ Draw landmarks with matplotlib """
-    def __init__(self, plots_dir=Path('..', 'replic', 'plots'),
-                 data_proc=DataProcess(), dimensions=None, frames=Frames()):
-        self.plots_dir = Path(plots_dir)
+    def __init__(self, plots_dir=None, data_proc=None, frames=None, dimensions=None):
+        if extract_file is None:
+            extract_file = 'obama2s.npy'
+        if plots_dir is None:
+            self.plots_dir = Path('..', 'replic', 'plots')
+        else:
+            self.plots_dir = Path(plots_dir)
         self.plots_dir.mkdir(parents=True, exist_ok=True)
-        self.data_proc = data_proc
+        if data_proc is None:
+            self.data_proc = DataProcess()
+        else:
+            self.data_proc = data_proc
+        if frames is None:
+            frames = Frames()
+        else:
+            self.frames = frames
         if dimensions is None:
             self.dimensions = {'width': 500, 'height': 500}
         else:
             self.dimensions = dimensions
-        self.frames = frames
         lmarks = data_proc.get_all_lmarks()
         self.axes = None
         self.bounds = {'mid': np.nanmean(lmarks, 0),
