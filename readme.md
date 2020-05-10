@@ -62,6 +62,7 @@ Use [procrustes analysis](https://link.springer.com/article/10.1007/BF02291478) 
 
     python -c "from replication import *; Draw('../replic/plots').save_plots_proc(annot=True, extract_file='../replic/samples/obama2s.npy')"
 
+
 ## Potential adaptation to other models
 The [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) could be adapted to other models besides those created by Eskimez at al. The model's inferred landmarks must be saved in NPY format file with three axes - frame number, landmark number, and coordinates such as [this example](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/replic/samples/obama2s.npy).
 

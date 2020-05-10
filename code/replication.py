@@ -242,8 +242,8 @@ class Draw:
 
     def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96, annot=False):
         """ Plot landmarks and save """
-        _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
-                                             self.bounds['height']/dpi), dpi=dpi)
+        _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
+                                             self.dimensions['height']/dpi), dpi=dpi)
         lmarks = self.data_proc.get_all_lmarks()
         if frame_num_sel is None:
             for frame_num in range(lmarks.shape[0]):
@@ -261,10 +261,10 @@ class Draw:
         if with_frame:
             image = plt.imread(self.frames.get_file_path(frame_num))
             self.axes.imshow(image)
-        frame_left = self.bounds['xmid'] - self.bounds['width']/2
-        frame_right = self.bounds['xmid'] + self.bounds['width']/2
-        frame_bottom = self.bounds['ymid'] - self.bounds['height']/2
-        frame_top = self.bounds['ymid'] + self.bounds['height']/2
+        frame_left = self.bounds['xmid'] - self.dimensions['width']/2
+        frame_right = self.bounds['xmid'] + self.dimensions['width']/2
+        frame_bottom = self.bounds['ymid'] - self.dimensions['height']/2
+        frame_top = self.bounds['ymid'] + self.dimensions['height']/2
         self.axes.set_xlim(frame_left, frame_right)
         self.axes.set_ylim(frame_bottom, frame_top)
         self.axes.invert_yaxis()
@@ -280,8 +280,8 @@ class Draw:
 
     def save_plots(self, with_frame=True, annot=False, dpi=96):
         """ save line plots """
-        _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
-                                             self.bounds['height']/dpi), dpi=dpi)
+        _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
+                                             self.dimensions['height']/dpi), dpi=dpi)
         lmarks = self.data_proc.get_all_lmarks()
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
@@ -290,10 +290,10 @@ class Draw:
                 self.axes.imshow(image)
 
             self._plot_features(lmarks, frame_num)
-            self.axes.set_xlim(self.bounds['xmid'] - (self.bounds['width']/2),
-                               self.bounds['xmid'] + (self.bounds['width']/2))
-            self.axes.set_ylim(self.bounds['ymid'] - (self.bounds['height']/2),
-                               self.bounds['ymid'] + (self.bounds['height']/2))
+            self.axes.set_xlim(self.bounds['xmid'] - (self.dimensions['width']/2),
+                               self.bounds['xmid'] + (self.dimensions['width']/2))
+            self.axes.set_ylim(self.bounds['ymid'] - (self.dimensions['height']/2),
+                               self.bounds['ymid'] + (self.dimensions['height']/2))
             self.axes.invert_yaxis()
             if annot:
                 self.annotate(frame_num, lmarks)
@@ -311,8 +311,8 @@ class Draw:
     def save_plots_proc(self, dpi=96, annot=False, extract_file='obama2s.npy',
                         lips_only=False):
         """ save line plots with Procrustes analysis """
-        _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
-                                             self.bounds['height']/dpi), dpi=dpi)
+        _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
+                                             self.dimensions['height']/dpi), dpi=dpi)
         lmarks = self.data_proc.get_procrustes(
             extract_file=extract_file, lips_only=lips_only)
         if self.plots_dir.is_dir():
@@ -325,7 +325,7 @@ class Draw:
             self.axes.invert_yaxis()
             if annot:
                 self.annotate(frame_num, lmarks)
-            plt.savefig(Path(self.plots_dir, str(frame_num) + '.png'))
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + '.png'))
 
 class Video:
     """ FFmpeg video processing manager """
