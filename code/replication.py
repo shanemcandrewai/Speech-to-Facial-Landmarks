@@ -13,10 +13,10 @@ import dlib
 class Frames:
     """ Frame file manager """
     def __init__(self, frame_dir=Path('..', 'replic', 'frames'),
-                 extension='jpeg', num_len=4):
-        self.frame_dir = frame_dir
-        frame_dir.mkdir(parents=True, exist_ok=True)
-        self.extension = extension
+                 suffix='.jpeg', num_len=4):
+        self.frame_dir = Path(frame_dir)
+        self.frame_dir.mkdir(parents=True, exist_ok=True)
+        self.suffix = suffix
         self.num_len = num_len
         self.frame_num = None
         self.file_name = None
@@ -24,18 +24,18 @@ class Frames:
     def get_file_path(self, frame_num=30):
         """ Build file path from frame number """
         self.frame_num = frame_num
-        self.file_name = str(frame_num).zfill(self.num_len) + '.' + self.extension
+        self.file_name = Path(str(frame_num).zfill(self.num_len)).with_suffix(self.suffix)
         return Path(self.frame_dir, self.file_name)
 
-    def get_frame_num(self, file_name=Path('0030.jpeg')):
+    def get_frame_num(self, file_name='0030.jpeg'):
         """ Derive frame number from image file name """
-        self.file_name = file_name
+        self.file_name = Path(file_name)
         self.frame_num = int(file_name.stem)
         return self.frame_num
 
     def get_frame_file_names(self):
         """ Get list of frame files """
-        return sorted(self.frame_dir.glob('*.' + self.extension))
+        return sorted(self.frame_dir.glob('*' + self.suffix))
 
     def get_frame_nums(self):
         """ Get list of frame numbers """
@@ -44,11 +44,11 @@ class Frames:
 
 class DlibProcess:
     """ Dlib facial landmark extraction manager """
-    def __init__(self, rgb_image=None, model_dir=Path('..', 'data'),
+    def __init__(self, model_dir=Path('..', 'data'),
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
                            'shape_predictor_68_face_landmarks.dat.bz2'):
         self.detector = dlib.get_frontal_face_detector()
-        self.rgb_image = rgb_image
+        self.rgb_image = None
         self.frame_num = None
         self.faces = None
         self.shape = None
@@ -59,7 +59,7 @@ class DlibProcess:
             with urllib.request.urlopen(model_url) as response, open(
                     self.model_file, 'wb') as model:
                 model.write(bz2.decompress(response.read()))
-        self.predictor = dlib.shape_predictor(self.model_file)
+        self.predictor = dlib.shape_predictor(str(self.model_file))
 
     def load_image(self, frame_num=30, frames=Frames()):
         """ load image and attempt to extract faces """
@@ -92,15 +92,12 @@ class DlibProcess:
             return np.full((1, 68, 2), np.nan)
         return np.array([(part.x, part.y) for part in self.shape.parts()]).reshape((1, 68, 2))
 
-    def display_overlay(self, image_file=Path(), frame_num=30):
+    def display_overlay(self, frame_num=30):
         """ Display image overlayed with landmarks """
         win = dlib.image_window()
         win.clear_overlay()
-        if image_file == Path():
-            self.load_image(frame_num)
-        else:
-            self.rgb_image = dlib.load_rgb_image(image_file)
-        win.set_image(self.rgb_image)
+        self.load_image(frame_num)
+        win.set_image(self.load_image(frame_num))
         if self.get_shape(frame_num) is not None:
             win.add_overlay(self.shape)
         dlib.hit_enter_to_continue()
@@ -108,41 +105,37 @@ class DlibProcess:
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
     def __init__(self, extract_dir=Path('..', 'replic', 'data')):
-        extract_dir.mkdir(parents=True, exist_ok=True)
-        self.extract_dir = extract_dir
+        self.extract_dir = Path(extract_dir)
+        self.extract_dir.mkdir(parents=True, exist_ok=True)
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
     def get_all_lmarks(self, new_extract=False,
-                       extract_file=Path('obama2s.npy'),
+                       extract_file='obama2s.npy',
                        dlib_proc=DlibProcess(), frames=Frames()):
         """ Get landmarks from face for all frames as ndarray """
         if new_extract:
             self.all_lmarks = None
         elif Path(self.extract_dir, extract_file).is_file():
-            self.all_lmarks = np.load(extract_file)
+            self.all_lmarks = np.load(Path(self.extract_dir, extract_file))
         if self.all_lmarks.size == 0:
             if not frames.get_frame_nums():
                 Video().extract_frames(extract_file.with_suffix('.mp4'))
             for frame_num in frames.get_frame_nums():
                 self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
-            np.save(extract_file, self.all_lmarks)
+            np.save(Path(self.extract_dir, extract_file), self.all_lmarks)
         return self.all_lmarks
 
-    def filter_outliers(self, zscore=4, extract_file=Path('obama2s.npy')):
+    def filter_outliers(self, zscore=4, extract_file='obama2s.npy'):
         """ replace outliers greater than specified zscore with np.nan) """
-        if extract_file is None:
-            extract_file = self.extract_file
         lmarks = self.get_all_lmarks(extract_file=extract_file)
         lmarks_zscore = stats.zscore(lmarks, nan_policy='omit')
         with np.errstate(invalid='ignore'):
             lmarks[np.any(lmarks_zscore > zscore, (1, 2, 3))] = np.nan
         return lmarks
 
-    def get_procrustes(self, extract_file=None, lips_only=False):
+    def get_procrustes(self, extract_file='obama2s.npy', lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
-        if extract_file is None:
-            extract_file = self.extract_file
         lmarks = self.get_all_lmarks(extract_file=extract_file)
         if lips_only:
             lmarks = lmarks[:, 48:, :]
@@ -158,10 +151,8 @@ class DataProcess:
             proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
         return proc_lmarks
 
-    def interpolate_lmarks(self, extract_file=None, old_rate=30, new_rate=25):
+    def interpolate_lmarks(self, extract_file='obama2s.npy', old_rate=30, new_rate=25):
         """ Change the frame rate of the extracted landmarks using linear interpolation """
-        if extract_file is None:
-            extract_file = self.extract_file
         lmarks = self.get_procrustes(extract_file=extract_file)
         old_frame_axis = np.arange(lmarks.shape[0])
         new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(lmarks.shape[0]*new_rate/old_rate))
@@ -172,11 +163,9 @@ class DataProcess:
                                                     lmarks[:, ax1, ax2])
         return new_lmarks
 
-    def get_closed_mouth_frame(self, extract_file=None, lmarks=None):
+    def get_closed_mouth_frame(self, extract_file='obama2s.npy', lmarks=None):
         """ Determine frame with the minimum distance between the inner lips where
             the horizonal distance is no more the one standard deviation from the mean """
-        if extract_file is None:
-            extract_file = self.extract_file
         if lmarks is None:
             lmarks = self.get_procrustes(extract_file=extract_file)
         lip_top = lmarks[:, 61:64]
@@ -188,11 +177,9 @@ class DataProcess:
         diff_vert_total = (diff_squared_vert[:, 0] + diff_squared_vert[:, 1])
         return np.nanargmin(np.sum(diff_vert_total, -1))
 
-    def remove_identity(self, extract_file=None,
+    def remove_identity(self, extract_file='obama2s.npy',
                         template=Path('..', 'data', 'mean.npy')):
         """ current frame - the closed mouth frame + template """
-        if extract_file is None:
-            extract_file = self.extract_file
         lmarks = self.interpolate_lmarks(extract_file=extract_file).reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
         template_2d = np.load(template)[:, :2]
@@ -202,8 +189,8 @@ class Draw:
     """ Draw landmarks with matplotlib """
     def __init__(self, plots_dir=Path('..', 'replic', 'plots'),
                  data_proc=DataProcess(), width=500, height=500):
-        Path(plots_dir).mkdir(parents=True, exist_ok=True)
-        self.plots_dir = plots_dir
+        self.plots_dir = Path(plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
         self.data_proc = data_proc
         lmarks = data_proc.get_all_lmarks()
         self.axes = None
@@ -317,17 +304,16 @@ class Draw:
                 lmarks[frame_num]):
             self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
 
-    def save_plots_proc(self, dpi=96, annot=False,
-                        extract_file=Path('..', 'replic', 'data',
-                                          'obama2s.npy'), lips_only=False):
+    def save_plots_proc(self, dpi=96, annot=False, extract_file='obama2s.npy',
+                        lips_only=False):
         """ save line plots with Procrustes analysis """
         _, self.axes = plt.subplots(figsize=(self.bounds['width']/dpi,
                                              self.bounds['height']/dpi), dpi=dpi)
         lmarks = self.data_proc.get_procrustes(
             extract_file=extract_file, lips_only=lips_only)
-        if Path.is_dir(self.plots_dir):
+        if self.plots_dir.is_dir():
             shutil.rmtree(self.plots_dir)
-        Path(self.plots_dir).mkdir(parents=True, exist_ok=True)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             self.axes.set_aspect(1)
@@ -342,22 +328,22 @@ class Video:
     def __init__(self, video_dir=Path('..', 'replic', 'video'),
                  audio_dir=Path('..', 'replic', 'audio'),
                  frames=Frames()):
-        self.video_dir = video_dir
-        self.audio_dir = audio_dir
+        self.video_dir = Path(video_dir)
+        self.audio_dir = Path(audio_dir)
         self.frames_dir = frames.frame_dir
 
     def extract_audio(self, video_in='obama2s.mp4',
                       audio_out=None):
         """ Extract audio from video sample """
         if audio_out is None:
-            audio_out = Path(self.audio_dir, os.path.splitext(video_in)[0] + '.wav')
+            audio_out = Path(self.audio_dir, video_in.with_suffix('.wav'))
         Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-y',
                 audio_out], check=True)
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
-        if Path.is_dir(self.frames_dir):
+        if Path(self.frames_dir).is_dir():
             shutil.rmtree(self.frames_dir)
         Path(self.frames_dir).mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-start_number',
