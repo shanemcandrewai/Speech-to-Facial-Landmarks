@@ -106,14 +106,14 @@ def generateFace(root, filename):
 
 def save_prediction(file_name, predicted, speech_orig):
     """ save predicted landmarks and speech vector to the output folder """
-    out_dir = os.path.join(args.out_fold, file_name)
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    np.save(os.path.join(out_dir, 'predicted.npy'), predicted)
-    np.save(os.path.join(out_dir, 'speech_orig.npy'), speech_orig)
+    out_dir = Path(args.out_fold, file_name)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    np.save(out_dir.joinpath('predicted.npy'), predicted)
+    np.save(out_dir.joinpath('speech_orig.npy'), speech_orig)
 
 def load_prediction(file_name):
     """ load predicted landmarks from the input speech folder """
-    prediction_file = os.path.join(args.in_folder, os.path.splitext(file_name)[0] + '.npy')
+    prediction_file = Path(args.in_folder, Path(file_name).with_suffix('.npy'))
     return np.load(prediction_file)
 
 output_path = args.out_fold
