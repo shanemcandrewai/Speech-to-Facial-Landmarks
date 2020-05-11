@@ -143,13 +143,19 @@ class DataProcess:
             np.save(Path(self.extract_dir, extract_file), self.all_lmarks)
         return self.all_lmarks
 
-    def filter_outliers(self, zscore=4, lmarks=None):
+    def filter_outliers(self, zscore=4, lmarks=None, lmarks_filter=None):
         """ replace outliers greater than specified zscore with np.nan) """
         if lmarks is None:
             if self.all_lmarks.size == 0:
-                lmarks = self.get_all_lmarks()
+                lmarks_out = self.get_all_lmarks().copy()
             else:
-                lmarks = self.all_lmarks
+                lmarks_out = self.all_lmarks.copy()
+        else:
+            lmarks_out = lmarks.copy()
+
+        if lmarks_filter is not None:
+            pass
+
         lmarks_zscore = stats.zscore(lmarks, nan_policy='omit')
         with np.errstate(invalid='ignore'):
             lmarks[np.any(np.abs(lmarks_zscore) > zscore, (1, 2))] = np.nan
