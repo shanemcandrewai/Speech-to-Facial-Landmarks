@@ -22,7 +22,6 @@ class Frames:
         self.num_len = num_len
         self.frame_num = None
         self.file_name = None
-        print('Frames')
 
     def get_file_path(self, frame_num=30):
         """ Build file path from frame number """
@@ -113,31 +112,33 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, extract_dir=None):
+    def __init__(self, extract_dir=None, frames=None):
         if extract_dir is None:
             self.extract_dir = Path('..', 'replic', 'data')
         else:
             self.extract_dir = Path(extract_dir)
+        if frames is None:
+            self.frames = Frames()
+        else:
+            self.frames = frames
         self.extract_dir.mkdir(parents=True, exist_ok=True)
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
     def get_all_lmarks(self, new_extract=False,
                        extract_file='obama2s.npy',
-                       dlib_proc=None, frames=None):
+                       dlib_proc=None):
         """ Get landmarks from face for all frames as ndarray """
         if dlib_proc is None:
             dlib_proc = DlibProcess()
-        if frames is None:
-            frames = Frames()
         if new_extract:
             self.all_lmarks = None
         elif Path(self.extract_dir, extract_file).is_file():
             self.all_lmarks = np.load(Path(self.extract_dir, extract_file))
         if self.all_lmarks.size == 0:
-            if not frames.get_frame_nums():
+            if not self.frames.get_frame_nums():
                 Video().extract_frames(extract_file.with_suffix('.mp4'))
-            for frame_num in frames.get_frame_nums():
+            for frame_num in self.frames.get_frame_nums():
                 self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
             np.save(Path(self.extract_dir, extract_file), self.all_lmarks)
         return self.all_lmarks
@@ -204,9 +205,7 @@ class DataProcess:
 
 class Draw:
     """ Draw landmarks with matplotlib """
-    def __init__(self, plots_dir=None, data_proc=None, frames=None, dimensions=None):
-        if extract_file is None:
-            extract_file = 'obama2s.npy'
+    def __init__(self, plots_dir=None, data_proc=None, dimensions=None):
         if plots_dir is None:
             self.plots_dir = Path('..', 'replic', 'plots')
         else:
@@ -216,15 +215,11 @@ class Draw:
             self.data_proc = DataProcess()
         else:
             self.data_proc = data_proc
-        if frames is None:
-            frames = Frames()
-        else:
-            self.frames = frames
         if dimensions is None:
             self.dimensions = {'width': 500, 'height': 500}
         else:
             self.dimensions = dimensions
-        lmarks = data_proc.get_all_lmarks()
+        lmarks = self.data_proc.get_all_lmarks()
         self.axes = None
         self.bounds = {'mid': np.nanmean(lmarks, 0),
                        'xmid': np.nanmean(lmarks[..., 0]),
@@ -286,7 +281,7 @@ class Draw:
         if lmarks is None:
             lmarks = self.data_proc.get_all_lmarks()
         if with_frame:
-            image = plt.imread(self.frames.get_file_path(frame_num))
+            image = plt.imread(self.data_proc.frames.get_file_path(frame_num))
             self.axes.imshow(image)
         frame_left = self.bounds['xmid'] - self.dimensions['width']/2
         frame_right = self.bounds['xmid'] + self.dimensions['width']/2
@@ -313,7 +308,7 @@ class Draw:
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             if with_frame:
-                image = plt.imread(self.frames.get_file_path(frame_num))
+                image = plt.imread(self.data_proc.frames.get_file_path(frame_num))
                 self.axes.imshow(image)
 
             self._plot_features(lmarks, frame_num)
@@ -352,40 +347,50 @@ class Draw:
             self.axes.invert_yaxis()
             if annot:
                 self.annotate(frame_num, lmarks)
-            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + '.png'))
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.data_proc.frames.num_len) + '.png'))
 
 class Video:
     """ FFmpeg video processing manager """
-    def __init__(self, video_dir=Path('..', 'replic', 'video'),
-                 audio_dir=Path('..', 'replic', 'audio'),
-                 frames=Frames()):
-        self.video_dir = Path(video_dir)
-        self.audio_dir = Path(audio_dir)
-        self.frames_dir = Path(frames.frame_dir)
+    def __init__(self, video_dir=None, audio_dir=None, frames=None):
+        if video_dir is None:
+            self.video_dir = Path('..', 'replic', 'video')
+        else:
+            self.video_dir = Path(video_dir)
+        if audio_dir is None:
+            self.audio_dir = Path('..', 'replic', 'audio')
+        else:
+            self.audio_dir = Path(audio_dir)
+        if frames is None:
+            self.frames = Frames()
+        else:
+            self.frames = frames
 
     def extract_audio(self, video_in='obama2s.mp4',
                       audio_out=None):
         """ Extract audio from video sample """
         if audio_out is None:
-            audio_out = Path(self.audio_dir, video_in.with_suffix('.wav'))
+            audio_out = Path(self.audio_dir, Path(video_in).with_suffix('.wav'))
         Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-y',
                 audio_out], check=True)
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
-        if self.frames_dir.is_dir():
-            shutil.rmtree(self.frames_dir)
-        self.frames_dir.mkdir(parents=True, exist_ok=True)
+        frame_dir = Path(self.frames.frame_dir)
+        if frame_dir.is_dir():
+            shutil.rmtree(frame_dir)
+        frame_dir.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)),
                 '-start_number', str(start_number), '-qscale:v', str(quality),
-                str(Path(self.frames_dir, r'%04d.jpeg'))], check=True)
+                str(Path(frame_dir, r'%04d.jpeg'))], check=True)
 
-    def create_video(self, video_out='plots.mp4', plots_dir=Path('..', 'replic', 'plots'),
-                     framerate=30):
+    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=30):
         """ create video from images """
+        if plots_dir is None:
+            plots_dir = Path('..', 'replic', 'plots')
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
-                Path(plots_dir, '%d.png'),
+                Path(plots_dir, r'%d.png'),
                 '-y', Path(self.video_dir, video_out)],
                check=True)
 
