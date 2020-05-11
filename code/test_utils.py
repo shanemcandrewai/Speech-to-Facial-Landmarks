@@ -1,5 +1,18 @@
 """ test utilities """
+import subprocess as sb
+from pathlib import Path
 import numpy as np
+def readme_tests(readme=None):
+    """ Extract tests from readme and execute """
+    if readme is None:
+        readme = Path('..', 'readme.md')
+    with open(readme) as target:
+        for line in target:
+            if line.startswith('    ') and 'test_utils' not in line:
+                print()
+                input('Press Enter to execute:' + line)
+                sb.run(line, shell=True, check=True)
+
 def get_array(shuffle=True, shape=None):
     """ create a simple integer ndarray with missing and unique elements"""
     if shape is None:
