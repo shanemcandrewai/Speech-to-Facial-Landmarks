@@ -4,7 +4,7 @@
 
 This project is an attempt to replicate some of the results from Eskimez et al's paper [Noise-Resilient Training Method for Face Landmark Generation From Speech](https://ieeexplore.ieee.org/document/8871109).
 
-The majority of the files are identical to [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface) from which this project is forked. Apart from this readme, the two most important enhancements are described below -
+The majority of the files are identical to [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface) from which this project is forked. Apart from this readme and some testing utilities, the two most important enhancements are described below -
 
 ## code/generate.py
 

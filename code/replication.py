@@ -143,12 +143,16 @@ class DataProcess:
             np.save(Path(self.extract_dir, extract_file), self.all_lmarks)
         return self.all_lmarks
 
-    def filter_outliers(self, zscore=4, extract_file='obama2s.npy'):
+    def filter_outliers(self, zscore=4, lmarks=None):
         """ replace outliers greater than specified zscore with np.nan) """
-        lmarks = self.get_all_lmarks(extract_file=extract_file)
+        if lmarks is None:
+            if self.all_lmarks.size == 0:
+                lmarks = self.get_all_lmarks()
+            else:
+                lmarks = self.all_lmarks
         lmarks_zscore = stats.zscore(lmarks, nan_policy='omit')
         with np.errstate(invalid='ignore'):
-            lmarks[np.any(lmarks_zscore > zscore, (1, 2, 3))] = np.nan
+            lmarks[np.any(np.abs(lmarks_zscore) > zscore, (1, 2))] = np.nan
         return lmarks
 
     def get_procrustes(self, extract_file='obama2s.npy', lips_only=False):
