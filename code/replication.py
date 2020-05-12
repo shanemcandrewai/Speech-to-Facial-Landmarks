@@ -195,11 +195,21 @@ class DataProcess:
                                                     lmarks[:, ax1, ax2])
         return new_lmarks
 
-    def get_closed_mouth_frame(self, extract_file='obama2s.npy', lmarks=None):
+    def get_closed_mouth_frame(self, extract_file='obama2s.npy', lmarks=None, zscore=1.3):
         """ Determine frame with the minimum distance between the inner lips
             excluding frames where the mouth is unusually wide or narrow """
         if lmarks is None:
             lmarks = self.get_procrustes(extract_file=extract_file)
+        lip_r = 60
+        lip_l = 64
+        x_coord = 0
+        y_coord = 1
+        mouth_width = ((lmarks[:, lip_r] - lmarks[:, lip_l])[:, x_coord]**2 + (
+            lmarks[:, lip_r] - lmarks[:, lip_l])[:, y_coord]**2)**0.5
+        lmarks_filtered = np.abs(stats.zscore(mouth_width, nan_policy='omit')) < zscore
+
+
+
         lmarks_filtered = self.filter_outliers(1.5, lmarks, [60, 64])
         lip_top = lmarks_filtered[:, 61:64]
         lip_bottom = lmarks_filtered[:, 65:68]
