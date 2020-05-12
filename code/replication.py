@@ -200,25 +200,19 @@ class DataProcess:
             excluding frames where the mouth is unusually wide or narrow """
         if lmarks is None:
             lmarks = self.get_procrustes(extract_file=extract_file)
-        lip_r = 60
-        lip_l = 64
         x_coord = 0
         y_coord = 1
+        lip_r = 60
+        lip_l = 64
         mouth_width = ((lmarks[:, lip_r] - lmarks[:, lip_l])[:, x_coord]**2 + (
             lmarks[:, lip_r] - lmarks[:, lip_l])[:, y_coord]**2)**0.5
-        lmarks_filtered = np.abs(stats.zscore(mouth_width, nan_policy='omit')) < zscore
-
-
-
-        lmarks_filtered = self.filter_outliers(1.5, lmarks, [60, 64])
-        lip_top = lmarks_filtered[:, 61:64]
-        lip_bottom = lmarks_filtered[:, 65:68]
-        lip_left = lmarks_filtered[:, 60:61]
-        lip_right = lmarks_filtered[:, 64:65]
-        diff_squared_vert = (lip_top - lip_bottom)**2
-        diff_squared_hori = (lip_left - lip_right)**2
-        diff_vert_total = (diff_squared_vert[:, 0] + diff_squared_vert[:, 1])
-        return np.nanargmin(np.sum(diff_vert_total, -1))
+        lmarks_filtered = np.nonzero(np.abs(stats.zscore(mouth_width, nan_policy='omit')) < zscore)
+        lip_top = slice(61, 64)
+        lip_bottom = slice(65, 68)
+        lip_dist = ((lmarks[lmarks_filtered, lip_top] - lmarks[lmarks_filtered, lip_bottom])[
+            :, :, x_coord]**2 + (lmarks[lmarks_filtered, lip_top] - lmarks[
+                lmarks_filtered, lip_bottom])[:, :, y_coord]**2)**0.5
+        return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
     def remove_identity(self, extract_file='obama2s.npy', template=None):
         """ current frame - the closed mouth frame + template """

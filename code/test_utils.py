@@ -20,7 +20,8 @@ def get_array(shuffle=True, shape=None):
         shape = (3, 3, 2)
     lmarks = np.arange(np.prod(shape))
     if shuffle:
-        np.random.shuffle(lmarks)
+        rng = np.random.default_rng()
+        rng.shuffle(lmarks)
     lmarks.resize(shape)
     return np.concatenate((np.full((1, shape[1], shape[2]), np.nan), lmarks))
 
