@@ -4,6 +4,7 @@ import shutil
 import urllib.request
 import bz2
 import subprocess as sp
+import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import procrustes
@@ -144,7 +145,8 @@ class DataProcess:
         return self.all_lmarks
 
     def filter_outliers(self, zscore=4, lmarks=None, lmarks_filter=None):
-        """ replace outliers greater than specified zscore with np.nan) """
+        """ replace outlier frames with np.nan values whose landmarks (filtered by
+            lmarks_filter if provided) are greater than specified zscore with np.nan """
         if lmarks is None:
             if self.all_lmarks.size == 0:
                 lmarks_out = self.get_all_lmarks().copy()
@@ -154,12 +156,15 @@ class DataProcess:
             lmarks_out = lmarks.copy()
 
         if lmarks_filter is not None:
-            pass
+            filter_inverse = np.ones_like(lmarks_out, np.bool)
+            filter_inverse[:, lmarks_filter] = False
+            lmarks_out[filter_inverse] = np.nan
 
-        lmarks_zscore = stats.zscore(lmarks, nan_policy='omit')
-        with np.errstate(invalid='ignore'):
-            lmarks[np.any(np.abs(lmarks_zscore) > zscore, (1, 2))] = np.nan
-        return lmarks
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            lmarks_zscore = stats.zscore(lmarks_out, nan_policy='omit')
+            lmarks_out[np.any(np.abs(lmarks_zscore) > zscore, (1, 2))] = np.nan
+        return lmarks_out
 
     def get_procrustes(self, extract_file='obama2s.npy', lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """

@@ -10,7 +10,8 @@ def readme_tests(readme=None):
         for line in target:
             if line.startswith('    ') and 'test_utils' not in line:
                 print()
-                input('Press Enter to execute:' + line)
+                print(line)
+                input('Press Enter to execute')
                 sb.run(line, shell=True, check=True)
 
 def get_array(shuffle=True, shape=None):
