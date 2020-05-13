@@ -200,12 +200,13 @@ class DataProcess:
             excluding frames where the mouth is unusually wide or narrow """
         if lmarks is None:
             lmarks = self.get_procrustes(extract_file=extract_file)
-        x_coord = 0
-        y_coord = 1
         lip_r = 60
         lip_l = 64
         mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
-        lmarks_filtered = np.nonzero(np.abs(stats.zscore(mouth_width, nan_policy='omit')) < zscore)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            lmarks_filtered = np.nonzero(np.abs(stats.zscore(
+                mouth_width, nan_policy='omit')) < zscore)
         lip_top = slice(61, 64)
         lip_bottom = slice(65, 68)
         lip_dist = np.linalg.norm(lmarks[lmarks_filtered, lip_top] - lmarks[
