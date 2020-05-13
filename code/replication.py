@@ -4,6 +4,7 @@ import shutil
 import urllib.request
 import bz2
 import subprocess as sp
+import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import procrustes
@@ -143,13 +144,27 @@ class DataProcess:
             np.save(Path(self.extract_dir, extract_file), self.all_lmarks)
         return self.all_lmarks
 
-    def filter_outliers(self, zscore=4, extract_file='obama2s.npy'):
-        """ replace outliers greater than specified zscore with np.nan) """
-        lmarks = self.get_all_lmarks(extract_file=extract_file)
-        lmarks_zscore = stats.zscore(lmarks, nan_policy='omit')
-        with np.errstate(invalid='ignore'):
-            lmarks[np.any(lmarks_zscore > zscore, (1, 2, 3))] = np.nan
-        return lmarks
+    def filter_outliers(self, zscore=4, lmarks=None, lmarks_filter=None):
+        """ replace outlier frames with np.nan values whose landmarks (filtered by
+            lmarks_filter if provided) are greater than specified zscore with np.nan """
+        if lmarks is None:
+            if self.all_lmarks.size == 0:
+                lmarks_out = self.get_all_lmarks().copy()
+            else:
+                lmarks_out = self.all_lmarks.copy()
+        else:
+            lmarks_out = lmarks.copy()
+
+        if lmarks_filter is not None:
+            filter_inverse = np.ones_like(lmarks_out, np.bool)
+            filter_inverse[:, lmarks_filter] = False
+            lmarks_out[filter_inverse] = np.nan
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            lmarks_zscore = stats.zscore(lmarks_out, nan_policy='omit')
+            lmarks_out[np.any(np.abs(lmarks_zscore) > zscore, (1, 2))] = np.nan
+        return lmarks_out
 
     def get_procrustes(self, extract_file='obama2s.npy', lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
@@ -180,19 +195,23 @@ class DataProcess:
                                                     lmarks[:, ax1, ax2])
         return new_lmarks
 
-    def get_closed_mouth_frame(self, extract_file='obama2s.npy', lmarks=None):
-        """ Determine frame with the minimum distance between the inner lips where
-            the horizonal distance is no more the one standard deviation from the mean """
+    def get_closed_mouth_frame(self, extract_file='obama2s.npy', lmarks=None, zscore=1.3):
+        """ Determine frame with the minimum distance between the inner lips
+            excluding frames where the mouth is unusually wide or narrow """
         if lmarks is None:
             lmarks = self.get_procrustes(extract_file=extract_file)
-        lip_top = lmarks[:, 61:64]
-        lip_bottom = lmarks[:, 65:68]
-        lip_left = lmarks[:, 60:61]
-        lip_right = lmarks[:, 64:65]
-        diff_squared_vert = (lip_top - lip_bottom)**2
-        diff_squared_hori = (lip_left - lip_right)**2
-        diff_vert_total = (diff_squared_vert[:, 0] + diff_squared_vert[:, 1])
-        return np.nanargmin(np.sum(diff_vert_total, -1))
+        lip_r = 60
+        lip_l = 64
+        mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            lmarks_filtered = np.nonzero(np.abs(stats.zscore(
+                mouth_width, nan_policy='omit')) < zscore)
+        lip_top = slice(61, 64)
+        lip_bottom = slice(65, 68)
+        lip_dist = np.linalg.norm(lmarks[lmarks_filtered, lip_top] - lmarks[
+            lmarks_filtered, lip_bottom], axis=2)
+        return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
     def remove_identity(self, extract_file='obama2s.npy', template=None):
         """ current frame - the closed mouth frame + template """
