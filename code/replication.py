@@ -13,37 +13,34 @@ import dlib
 
 class Frames:
     """ Frame file manager """
-    def __init__(self, frame_dir=None, suffix='.jpeg', num_len=4):
-        if frame_dir is None:
-            self.frame_dir = Path('..', 'replic', 'frames')
+    def __init__(self, dirs=None, video=None, suffix='.jpeg', num_len=4):
+        if dirs is None:
+            self.dirs = {'frames' : Path('..', 'replic', 'frames'),
+                         'data' : Path('..', 'replic', 'data')}
         else:
-            self.frame_dir = Path(frame_dir)
-        self.frame_dir.mkdir(parents=True, exist_ok=True)
+            self.dirs = dirs
+        if video is None:
+            self.video = Path('..', 'replic', 'samples', 'obama2s.mp4')
+        else:
+            self.video = Path(video)
+        self.dirs['frames'].mkdir(parents=True, exist_ok=True)
+        self.dirs['data'].mkdir(parents=True, exist_ok=True)
         self.suffix = suffix
         self.num_len = num_len
-        self.frame_num = None
-        self.file_name = None
 
     def get_file_path(self, frame_num=30):
         """ Build file path from frame number """
-        self.frame_num = frame_num
-        self.file_name = Path(str(frame_num).zfill(self.num_len)).with_suffix(self.suffix)
-        return Path(self.frame_dir, self.file_name)
-
-    def get_frame_num(self, file_name='0030.jpeg'):
-        """ Derive frame number from image file name """
-        self.file_name = Path(file_name)
-        self.frame_num = int(file_name.stem)
-        return self.frame_num
+        return Path(self.dirs['frames'], str(frame_num).zfill(
+            self.num_len)).with_suffix(self.suffix)
 
     def get_frame_file_names(self):
         """ Get list of frame files """
-        return sorted(self.frame_dir.glob('*' + self.suffix))
+        return sorted(self.dirs['frames'].glob('*' + self.suffix))
 
     def get_frame_nums(self):
         """ Get list of frame numbers """
         frames = self.get_frame_file_names()
-        return [self.get_frame_num(frame) for frame in frames]
+        return [int(Path(frame).stem) for frame in frames]
 
 class DlibProcess:
     """ Dlib facial landmark extraction manager """
@@ -113,16 +110,11 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, extract_dir=None, frames=None):
-        if extract_dir is None:
-            self.extract_dir = Path('..', 'replic', 'data')
-        else:
-            self.extract_dir = Path(extract_dir)
+    def __init__(self, frames=None):
         if frames is None:
             self.frames = Frames()
         else:
             self.frames = frames
-        self.extract_dir.mkdir(parents=True, exist_ok=True)
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
@@ -134,37 +126,15 @@ class DataProcess:
             dlib_proc = DlibProcess()
         if new_extract:
             self.all_lmarks = None
-        elif Path(self.extract_dir, extract_file).is_file():
-            self.all_lmarks = np.load(Path(self.extract_dir, extract_file))
+        elif Path(self.frames.dirs['data'], extract_file).is_file():
+            self.all_lmarks = np.load(Path(self.frames.dirs['data'], extract_file))
         if self.all_lmarks.size == 0:
             if not self.frames.get_frame_nums():
                 Video().extract_frames(extract_file.with_suffix('.mp4'))
             for frame_num in self.frames.get_frame_nums():
                 self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
-            np.save(Path(self.extract_dir, extract_file), self.all_lmarks)
+            np.save(Path(self.frames['data'], extract_file), self.all_lmarks)
         return self.all_lmarks
-
-    def filter_outliers(self, zscore=4, lmarks=None, lmarks_filter=None):
-        """ replace outlier frames with np.nan values whose landmarks (filtered by
-            lmarks_filter if provided) are greater than specified zscore with np.nan """
-        if lmarks is None:
-            if self.all_lmarks.size == 0:
-                lmarks_out = self.get_all_lmarks().copy()
-            else:
-                lmarks_out = self.all_lmarks.copy()
-        else:
-            lmarks_out = lmarks.copy()
-
-        if lmarks_filter is not None:
-            filter_inverse = np.ones_like(lmarks_out, np.bool)
-            filter_inverse[:, lmarks_filter] = False
-            lmarks_out[filter_inverse] = np.nan
-
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', category=RuntimeWarning)
-            lmarks_zscore = stats.zscore(lmarks_out, nan_policy='omit')
-            lmarks_out[np.any(np.abs(lmarks_zscore) > zscore, (1, 2))] = np.nan
-        return lmarks_out
 
     def get_procrustes(self, extract_file='obama2s.npy', lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
@@ -220,7 +190,7 @@ class DataProcess:
         lmarks = self.interpolate_lmarks(extract_file=extract_file).reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
         template_2d = np.load(str(template))[:, :2]
-        return lmarks - closed_mouth + template_2d
+        return lmarks - lmarks[closed_mouth] + template_2d
 
 class Draw:
     """ Draw landmarks with matplotlib """
@@ -371,11 +341,7 @@ class Draw:
 
 class Video:
     """ FFmpeg video processing manager """
-    def __init__(self, video_dir=None, audio_dir=None, frames=None):
-        if video_dir is None:
-            self.video_dir = Path('..', 'replic', 'video')
-        else:
-            self.video_dir = Path(video_dir)
+    def __init__(self, audio_dir=None, frames=None):
         if audio_dir is None:
             self.audio_dir = Path('..', 'replic', 'audio')
         else:
@@ -391,7 +357,7 @@ class Video:
         if audio_out is None:
             audio_out = Path(self.audio_dir, Path(video_in).with_suffix('.wav'))
         Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-y',
+        sp.run(['ffmpeg', '-i', Path(self.frames.dirs['video'], video_in), '-y',
                 audio_out], check=True)
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
@@ -400,9 +366,10 @@ class Video:
         if frame_dir.is_dir():
             shutil.rmtree(frame_dir)
         frame_dir.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)),
+        sp.run(['ffmpeg', '-i', str(Path(self.frames.dirs['video'], video_in)),
                 '-start_number', str(start_number), '-qscale:v', str(quality),
-                str(Path(frame_dir, r'%04d.jpeg'))], check=True)
+                str(Path(frame_dir, r'%0' + str(
+                    self.frames.num_len) + 'd' + self.frames.suffix))], check=True)
 
     def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=30):
         """ create video from images """
@@ -410,29 +377,29 @@ class Video:
             plots_dir = Path('..', 'replic', 'plots')
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
                 Path(plots_dir, r'%d.png'),
-                '-y', Path(self.video_dir, video_out)],
+                '-y', Path(self.frames.dirs['video'], video_out)],
                check=True)
 
     def combine_h(self, video_left='ob25_painted_.mp4',
                   video_right='obama2s_painted_.mp4',
                   video_out='obama2s_comparison.mp4'):
         """ stack videos horizontally """
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_left), '-i',
-                Path(self.video_dir, video_right), '-filter_complex',
+        sp.run(['ffmpeg', '-i', Path(self.frames.dirs['video'], video_left), '-i',
+                Path(self.frames.dirs['video'], video_right), '-filter_complex',
                 'hstack=inputs=2', '-y',
-                Path(self.video_dir, video_out)], check=True)
+                Path(self.frames.dirs['video'], video_out)], check=True)
 
     def combine_v(self, video_top='obamac.mp4', video_bottom='combined_h.mp4',
                   video_out='obama_v.mp4'):
         """ stack videos vertically """
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_top), '-i',
-                Path(self.video_dir, video_bottom), '-filter_complex',
+        sp.run(['ffmpeg', '-i', Path(self.frames.dirs['video'], video_top), '-i',
+                Path(self.frames.dirs['video'], video_bottom), '-filter_complex',
                 'vstack=inputs=2', '-y',
-                Path(self.video_dir, video_out)], check=True)
+                Path(self.frames.dirs['video'], video_out)], check=True)
 
     def scale(self, video_in='obama2s.mp4', video_out='scale.mp4', width=500,
               height=500):
         """ scale video """
         sp.run(['ffmpeg', '-i', video_in, '-s', str(width) + 'x' + str(height),
                 '-c:a', 'copy', '-y',
-                Path(self.video_dir, video_out)], check=True)
+                Path(self.frames.dirs['video'], video_out)], check=True)
