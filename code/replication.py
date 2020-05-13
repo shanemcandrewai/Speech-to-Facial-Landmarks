@@ -204,14 +204,12 @@ class DataProcess:
         y_coord = 1
         lip_r = 60
         lip_l = 64
-        mouth_width = ((lmarks[:, lip_r] - lmarks[:, lip_l])[:, x_coord]**2 + (
-            lmarks[:, lip_r] - lmarks[:, lip_l])[:, y_coord]**2)**0.5
+        mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
         lmarks_filtered = np.nonzero(np.abs(stats.zscore(mouth_width, nan_policy='omit')) < zscore)
         lip_top = slice(61, 64)
         lip_bottom = slice(65, 68)
-        lip_dist = ((lmarks[lmarks_filtered, lip_top] - lmarks[lmarks_filtered, lip_bottom])[
-            :, :, x_coord]**2 + (lmarks[lmarks_filtered, lip_top] - lmarks[
-                lmarks_filtered, lip_bottom])[:, :, y_coord]**2)**0.5
+        lip_dist = np.linalg.norm(lmarks[lmarks_filtered, lip_top] - lmarks[
+            lmarks_filtered, lip_bottom], axis=2)
         return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
     def remove_identity(self, extract_file='obama2s.npy', template=None):
