@@ -21,11 +21,11 @@ In addition to the command-line options specified in [Noise-Resilient Training M
 
 Save the landmarks predicted and speech vector using the [ID_CNN](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/tree/master/pre_trained) model from `../speech_samples/` to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file in `replic/pred_out`
 
-    python generate.py -i ../speech_samples/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out -s  
+    python generate.py -i ../replic/samples/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out -s  
 
 Load landmarks from an external files in `../replic/samples/obama2s/` and generate animation in `../replic/pred_out`
 
-    python generate.py -i ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/anim_out/ -l
+    python generate.py -i ../replic/samples/identity_removed/ -m ../pre_trained/1D_CNN.pt -o ../replic/anim_out/ -l
 
 ## code/replication.py
 
@@ -38,37 +38,45 @@ In order to avoid this problem, the calculation was [enhanced](https://github.co
 
 Next a template face is calculated based the average of all the closed mouth references measured across all identities. The differences between each frame and the selected reference frame for the particular speaker are calculated and added to the template face.
 
-### class Video:
-manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpeg.org/)
-#### Example usage
+### class Video(video_dir, audio_dir, frames):
+Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpeg.org/)
+#### Example usage : extract_frames(video_in, start_number, quality)
 Extract frames from `replic/samples/obama2s.mp4` into `replic/frames`
 
     python -c "from replication import *; Video('../replic/samples/', frames=Frames('../replic/frames')).extract_frames('obama2s.mp4')"
-### class Frames:
+#### Example usage : extract_audio(video_in, audio_out)
+Extract audio in WAV format from video
+
+    python -c "from replication import *; Video('../replic/samples/', '../replic/samples/').extract_audio('obama2s.mp4')"
+#### Example usage : combine_h(video_left, video_right, video_out)
+Stack input video horizontally and for easier visual comparision
+
+    python -c "from replication import *; Video('../replic/samples/').combine_h('obama2s/obama2s_painted_.mp4', 'identity_removed/obama2s.ir_painted_.mp4', 'obama2s_comparison.mp4')"
+### class Frames(frames_dir, video, suffix, num_len):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
-#### Example usage
+#### Example usage : get_frame_nums()
 Get frame numbers from `../replic/frames`
 
     python -c "from replication import *; print(Frames('../replic/frames').get_frame_nums())"
-### class DlibProcess:
+### class DlibProcess(model_dir, model_url)
 Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
-#### Example usage
+#### Example usage : display_overlay(frame_num)
 Extract landmarks from Frame 30 and overlay the frame image with corresponding line plots
 
     python -c "from replication import *; DlibProcess().display_overlay(frame_num=30)"
-### class DataProcess:
+### class DataProcess(data_dir, extract_file, frames):
 Calculations and supporting methods required for the replication of experiments
-#### Example usage : get_closed_mouth_frame:
+#### Example usage : get_closed_mouth_frame(lmarks, zscore)
 First calculate the width of the lips in each frame and filter out outliers. From those remaining, select the one with the lowest distance between the upper and low lips.
 
     python -c "from replication import *; print(DataProcess('../replic/data/', 'obama2s.npy').get_closed_mouth_frame())"
-#### Example usage : remove_identity:
+#### Example usage : remove_identity(lmarks, template, file_out)
 Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to ../replic/samples/obama2s.ir.npy
 
     python -c "from replication import *; DataProcess('../replic/samples/', 'obama2s.npy').remove_identity(file_out = 'obama2s.ir.npy')"
-### class Draw:
+### class Draw(plots_dir, data_proc, dimensions):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
-#### Example usage
+#### Example usage(dpi, annot, lips_only)
 Use procrustes analysis to align and normalise landmarks, plot and save them in `replic/plots`
 
     python -c "from replication import *; Draw('../replic/plots', DataProcess('../replic/data/', 'obama2s.npy')).save_plots_proc(annot=True)"
