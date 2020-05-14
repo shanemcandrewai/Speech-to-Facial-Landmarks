@@ -203,6 +203,7 @@ class DataProcess:
         lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
         template_2d = np.load(str(template))[:, :2]
+#        identity_removed = np.tile(template_2d, (lmarks.shape[0], 1, 1))
         identity_removed = lmarks - closed_mouth + template_2d
         if file_out is not None:
             np.save(Path(self.data_dir, file_out), identity_removed)

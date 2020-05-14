@@ -23,9 +23,9 @@ Save the landmarks predicted and speech vector using the [ID_CNN](https://github
 
     python generate.py -i ../speech_samples/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out -s  
 
-Load landmarks from an external files in `../replic/samples/files_in/` and generate animation in `../replic/pred_out`
+Load landmarks from an external files in `../replic/samples/obama2s/` and generate animation in `../replic/pred_out`
 
-    python generate.py -i ../replic/samples/files_in/ -m ../pre_trained/1D_CNN.pt -o ../replic/anim_out/ -l
+    python generate.py -i ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/anim_out/ -l
 
 ## code/replication.py
 
@@ -62,6 +62,10 @@ Calculations and supporting methods required for the replication of experiments
 First calculate the width of the lips in each frame and filter out outliers. From those remaining, select the one with the lowest distance between the upper and low lips.
 
     python -c "from replication import *; print(DataProcess('../replic/data/', 'obama2s.npy').get_closed_mouth_frame())"
+#### Example usage : remove_identity:
+Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to ../replic/samples/obama2s.ir.npy
+
+    python -c "from replication import *; DataProcess('../replic/samples/', 'obama2s.npy').remove_identity(file_out = 'obama2s.ir.npy')"
 ### class Draw:
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage
