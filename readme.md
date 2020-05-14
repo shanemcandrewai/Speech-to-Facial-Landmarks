@@ -61,14 +61,13 @@ Calculations and supporting methods required for the replication of experiments
 #### Example usage : get_closed_mouth_frame:
 First calculate the width of the lips in each frame and filter out outliers. From those remaining, select the one with the lowest distance between the upper and low lips.
 
-    python -c "from replication import *; print(DataProcess('../replic/data/obama2s.npy').get_closed_mouth_frame())"
+    python -c "from replication import *; print(DataProcess('../replic/data/', 'obama2s.npy').get_closed_mouth_frame())"
 ### class Draw:
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage
 Use procrustes analysis to align and normalise landmarks, plot and save them in `replic/plots`
 
-    python -c "from replication import *; Draw('../replic/plots').save_plots_proc(annot=True, extract_file='../replic/samples/obama2s.npy')"
-
+    python -c "from replication import *; Draw('../replic/plots', DataProcess('../replic/data/', 'obama2s.npy')).save_plots_proc(annot=True)"
 ## code/test_utils.py
 ### function readme_test
 Extract examples from this readme and execute them sequentially

@@ -108,9 +108,14 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, extract_file=None, frames=None):
+    def __init__(self, data_dir=None, extract_file=None, frames=None):
+        if data_dir is None:
+            self.data_dir = Path('..', 'replic', 'data')
+        else:
+            self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
         if extract_file is None:
-            self.extract_file = Path('..', 'replic', 'data', 'obama2s.npy')
+            self.extract_file = 'obama2s.npy'
         else:
             self.extract_file = Path(extract_file)
         if frames is None:
@@ -124,21 +129,24 @@ class DataProcess:
         """ Get landmarks from face for all frames as ndarray """
         if dlib_proc is None:
             dlib_proc = DlibProcess()
+        extract = Path(self.data_dir, self.extract_file)
         if new_extract:
             self.all_lmarks = None
-        elif self.extract_file.is_file():
-            self.all_lmarks = np.load(self.extract_file)
+        elif extract.is_file():
+            self.all_lmarks = np.load(extract)
         if self.all_lmarks.size == 0:
             if not self.frames.get_frame_nums():
                 Video().extract_frames(self.extract_file.with_suffix('.mp4'))
             for frame_num in self.frames.get_frame_nums():
-                self.all_lmarks = np.concatenate([self.all_lmarks, dlib_proc.get_lmarks(frame_num)])
-            np.save(self.extract_file, self.all_lmarks)
+                self.all_lmarks = np.concatenate([self.all_lmarks,
+                                                  dlib_proc.get_lmarks(frame_num)])
+            np.save(extract, self.all_lmarks)
         return self.all_lmarks
 
-    def get_procrustes(self, lips_only=False):
+    def get_procrustes(self, lmarks=None, lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
-        lmarks = self.get_all_lmarks()
+        if lmarks is None:
+            lmarks = self.get_all_lmarks()
         if lips_only:
             lmarks = lmarks[:, 48:, :]
         mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
@@ -153,11 +161,14 @@ class DataProcess:
             proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
         return proc_lmarks
 
-    def interpolate_lmarks(self, old_rate=30, new_rate=25):
-        """ Change the frame rate of the extracted landmarks using linear interpolation """
-        lmarks = self.get_procrustes()
+    def interpolate_lmarks(self, lmarks=None, old_rate=30, new_rate=25):
+        """ Change the frame rate of the extracted landmarks using linear
+            interpolation """
+        if lmarks is None:
+            lmarks = self.get_procrustes()
         old_frame_axis = np.arange(lmarks.shape[0])
-        new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(lmarks.shape[0]*new_rate/old_rate))
+        new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(
+            lmarks.shape[0]*new_rate/old_rate))
         new_lmarks = np.zeros((len(new_frame_axis),) + (lmarks.shape[1:]))
         for ax1 in range(lmarks.shape[1]):
             for ax2 in range(lmarks.shape[2]):
@@ -183,7 +194,7 @@ class DataProcess:
             lmarks_filtered, lip_bottom], axis=2)
         return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
-    def remove_identity(self, lmarks=None, template=None):
+    def remove_identity(self, lmarks=None, template=None, file_out=None):
         """ current frame - the closed mouth frame + template """
         if lmarks is None:
             lmarks = self.get_procrustes()
@@ -192,7 +203,10 @@ class DataProcess:
         lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
         template_2d = np.load(str(template))[:, :2]
-        return lmarks - closed_mouth + template_2d
+        identity_removed = lmarks - closed_mouth + template_2d
+        if file_out is not None:
+            np.save(Path(self.data_dir, file_out), identity_removed)
+        return identity_removed
 
 class Draw:
     """ Draw landmarks with matplotlib """
@@ -253,7 +267,8 @@ class Draw:
         self.axes.plot(features['lips_out'][:, 0], features['lips_out'][:, 1], 'b-')
         self.axes.plot(features['lips_in'][:, 0], features['lips_in'][:, 1], 'b-')
 
-    def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96, annot=False):
+    def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96,
+                     annot=False):
         """ Plot landmarks and save """
         _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
                                              self.dimensions['height']/dpi), dpi=dpi)
@@ -323,8 +338,8 @@ class Draw:
 
     def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
         """ save line plots with Procrustes analysis """
-        _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
-                                             self.dimensions['height']/dpi), dpi=dpi)
+        _, self.axes = plt.subplots(figsize=(
+            self.dimensions['width']/dpi, self.dimensions['height']/dpi), dpi=dpi)
         lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
         if self.plots_dir.is_dir():
             shutil.rmtree(self.plots_dir)
