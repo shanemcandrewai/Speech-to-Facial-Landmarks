@@ -108,7 +108,7 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, data_dir=None, frames=None):
+    def __init__(self, data_dir=None, frames=None, extract_file='obama2s.npy',):
         if data_dir is None:
             self.data_dir = Path('..', 'replic', 'data')
         else:
@@ -117,6 +117,7 @@ class DataProcess:
             self.frames = Frames()
         else:
             self.frames = frames
+        self.extract_file = extract_file
         self.axes = None
         self.all_lmarks = np.empty((0, 68, 2))
 
