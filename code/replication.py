@@ -194,14 +194,14 @@ class DataProcess:
             lmarks_filtered, lip_bottom], axis=2)
         return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
-    def remove_identity(self, lmarks=None, template=None, file_out=None):
+    def remove_identity(self, lmarks=None, template=None, file_out=None, zscore=0.01):
         """ current frame - the closed mouth frame + template """
         if lmarks is None:
             lmarks = self.get_procrustes()
         if template is None:
             template = Path('..', 'data', 'mean.npy')
         lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
-        closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks)]
+        closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
         template_2d = np.load(str(template))[:, :2]
 #        identity_removed = np.tile(template_2d, (lmarks.shape[0], 1, 1))
         identity_removed = lmarks - closed_mouth + template_2d
@@ -416,9 +416,9 @@ class Video:
                 'vstack=inputs=2', '-y',
                 Path(self.video_dir, video_out)], check=True)
 
-    def scale(self, video_in='obama2s.mp4', video_out='scale.mp4', width=500,
+    def scale(self, video_in='obama2s.mp4', video_out='obama2s_500.mp4', width=500,
               height=500):
         """ scale video """
-        sp.run(['ffmpeg', '-i', video_in, '-s', str(width) + 'x' + str(height),
+        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-s', str(width) + 'x' + str(height),
                 '-c:a', 'copy', '-y',
                 Path(self.video_dir, video_out)], check=True)

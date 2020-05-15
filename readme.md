@@ -23,7 +23,7 @@ Save the landmarks predicted and speech vector using the [ID_CNN](https://github
 
     python generate.py -i ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out/ -s  
 
-Load landmarks from an external files in `replic/samples/identity_removed/` and generate animation in `replic/pred_out/`
+Load landmarks from an external files in `replic/samples/identity_removed/` and generate animation in `replic/anim_out/`
 
     python generate.py -i ../replic/samples/identity_removed/ -m ../pre_trained/1D_CNN.pt -o ../replic/anim_out/ -l
 
