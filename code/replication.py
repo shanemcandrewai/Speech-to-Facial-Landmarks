@@ -55,7 +55,7 @@ class DlibProcess:
         self.faces = None
         self.shape = None
         if not self.model_file.is_file():
-            print('Model ' + self.model_file + ' not found')
+            print('Model ' + str(self.model_file) + ' not found')
             print('Downloading from ' + model_url)
             with urllib.request.urlopen(model_url) as response, open(
                     self.model_file, 'wb') as model:
