@@ -400,17 +400,16 @@ class Video:
                 '-y', Path(self.video_dir, video_out)],
                check=True)
 
-    def combine_h(self, video_left='obama2s/obama2s_painted_.mp4',
-                  video_right='identity_removed/obama2s.ir_painted_.mp4',
-                  video_out='obama2s_comparison.mp4'):
+    def stack_h(self, video_left='obama2s/obama2s_painted_.mp4',
+                video_right='identity_removed/obama2s.ir_painted_.mp4',
+                video_out='obama2s_comparison.mp4'):
         """ stack videos horizontally """
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_left), '-i',
                 Path(self.video_dir, video_right), '-filter_complex',
                 'hstack=inputs=2', '-y',
                 Path(self.video_dir, video_out)], check=True)
 
-    def combine_v(self, video_top='obamac.mp4', video_bottom='combined_h.mp4',
-                  video_out='obama_v.mp4'):
+    def stack_v(self, video_top, video_bottom, video_out):
         """ stack videos vertically """
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_top), '-i',
                 Path(self.video_dir, video_bottom), '-filter_complex',

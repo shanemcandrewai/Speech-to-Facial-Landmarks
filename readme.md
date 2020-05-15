@@ -19,11 +19,11 @@ In addition to the command-line options specified in [Noise-Resilient Training M
 
 #### Examples
 
-Save the landmarks predicted and speech vector using the [ID_CNN](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/tree/master/pre_trained) model from `replic/samples/` to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file in `replic/pred_out/`
+Save the landmarks predicted and speech vector using the [ID_CNN](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/tree/master/pre_trained) model from audio in `replic/samples/obama2s/` to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file in `replic/pred_out/`
 
-    python generate.py -i ../replic/samples/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out/ -s  
+    python generate.py -i ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out/ -s  
 
-Load landmarks from an external files in `../replic/samples/obama2s/` and generate animation in `../replic/pred_out`
+Load landmarks from an external files in `replic/samples/identity_removed/` and generate animation in `replic/pred_out/`
 
     python generate.py -i ../replic/samples/identity_removed/ -m ../pre_trained/1D_CNN.pt -o ../replic/anim_out/ -l
 
@@ -34,7 +34,7 @@ Eskimez et al. released pre-trained models and the generation script with the ex
 #### Face Landmark Identity Removal
 Eskimez et al. noted that even after applying [procrustes analysis](https://link.springer.com/article/10.1007/BF02291478), there was still a significant correlation between the aligned landmarks and the facial characteristics of the individual speaker. The goal is to minimise these so that the neural network can learn the relationship between speech and facial landmarks regardless of the speaker's identity. Eskimez et al. select a reference frame with a closed mouth and then calculate the differences between this and the corresponding landmarks resulting from procrustes analysis. This reference is calculated based on the distance between the upper and lower lip coordinates.  However this simple calculation can result in reference frames which are far from average such as a frame where the speaker has [pursed lips](replic/samples/obpursed.jpg)
 
-In order to avoid this problem, the calculation was [enhanced](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py#L176) to exclude frames where the mouth is unusually wide or narrow.
+In order to avoid this problem, the calculation was [enhanced](code/replication.py#L179) to exclude frames where the mouth is unusually wide or narrow.
 
 Next a template face is calculated based the average of all the closed mouth references measured across all identities. The differences between each frame and the selected reference frame for the particular speaker are calculated and added to the template face.
 
@@ -45,13 +45,13 @@ Extract frames from `replic/samples/obama2s.mp4` into `replic/frames/`
 
     python -c "from replication import *; Video('../replic/samples/', frames=Frames('../replic/frames/')).extract_frames('obama2s.mp4')"
 #### Example usage : extract_audio(video_in, audio_out)
-Extract audio in WAV format from video in `replic/samples/`
+Extract audio in WAV format from video in `replic/samples/` to replic/audio_out
 
-    python -c "from replication import *; Video('../replic/samples/', '../replic/samples/').extract_audio('obama2s.mp4')"
-#### Example usage : combine_h(video_left, video_right, video_out)
+    python -c "from replication import *; Video('../replic/samples/', '../replic/audio_out/').extract_audio('obama2s.mp4')"
+#### Example usage : stack_h(video_left, video_right, video_out)
 Stack input video horizontally and for easier visual comparision into `replic/samples/`
 
-    python -c "from replication import *; Video('../replic/samples/').combine_h('obama2s/obama2s_painted_.mp4', 'identity_removed/obama2s.ir_painted_.mp4', 'obama2s_comparison.mp4')"
+    python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_.mp4', 'identity_removed/obama2s.ir_painted_.mp4', 'obama2s_comparison.mp4')"
 ### class Frames(frames_dir, video, suffix, num_len):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
 #### Example usage : get_frame_nums()
