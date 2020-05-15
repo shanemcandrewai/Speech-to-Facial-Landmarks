@@ -49,9 +49,9 @@ Extract audio in WAV format from video in `replic/samples/` to replic/audio_out
 
     python -c "from replication import *; Video('../replic/samples/', '../replic/audio_out/').extract_audio('obama2s.mp4')"
 #### Example usage : stack_h(video_left, video_right, video_out)
-Stack input video horizontally and for easier visual comparision into `replic/samples/`
+Stack input video horizontally and for easier visual comparision into `replic/anim_out/`
 
-    python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_.mp4', 'identity_removed/obama2s.ir_painted_.mp4', 'obama2s_comparison.mp4')"
+    python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_.mp4', 'identity_removed/obama2s.ir_painted_.mp4', '../anim_out/obama2s_comparison.mp4')"
 ### class Frames(frames_dir, video, suffix, num_len):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
 #### Example usage : get_frame_nums()
