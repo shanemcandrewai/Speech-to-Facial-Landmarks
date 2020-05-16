@@ -415,9 +415,12 @@ class Video:
                 'vstack=inputs=2', '-y',
                 Path(self.video_dir, video_out)], check=True)
 
-    def draw_text(self, video_in='obama2s_painted_.mp4', video_out='obama2s_painted_t.mp4',
+    def draw_text(self, video_in='obama2s_painted_.mp4', video_out=None,
                   frame_text='frame %{frame_num} %{pts}'):
         """ add text to video frames """
+        if video_out is None:
+            video_out = Path(video_in.parent, Path(
+                video_in.stem + '_t').with_suffix('.mp4'))
         sp.run(['ffmpeg', '-y', '-i', Path(self.video_dir, video_in), '-vf',
                 'drawtext=text=\'' + frame_text + '\'',
                 Path(self.video_dir, video_out)], check=True)
