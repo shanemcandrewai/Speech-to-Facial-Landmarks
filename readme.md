@@ -8,18 +8,18 @@ The majority of the files are identical to [Noise-Resilient Training Method](htt
 
 ## code/generate.py
 
-The [original generate script](https://github.com/eeskimez/noise_resilient_3dtface/blob/master/code/generate.py) reads audio files, infers the facial landmarks and generates animated faces. The [enhanced generate script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/generate.py) allows the user to save the predicted landmarks to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file. It also extends the animation functionality to accept an arbitrary externally created file of landmarks. These changes are limited to enhancements which could not be put into a separate script and were carefully inserted in order to minimise the possibility of disturbing the original functionality. In addition, some redundant code was removed as a result of running [Pylint](https://www.pylint.org/) on the script. To view the precise changes, execute `git diff 3c804caff3e4e0cabd7259ccb97c4038b509d630 code/generate.py`
+The [original generate script](https://github.com/eeskimez/noise_resilient_3dtface/blob/master/code/generate.py) reads audio files, infers the facial landmarks and generates animated faces. The [enhanced generate script](code/generate.py) allows the user to save the predicted landmarks to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file. It also extends the animation functionality to accept an arbitrary externally created file of landmarks. These changes are limited to enhancements which could not be put into a separate script and were carefully inserted in order to minimise the possibility of disturbing the original functionality. In addition, some redundant code was removed as a result of running [Pylint](https://www.pylint.org/) on the script. To view the precise changes, execute `git diff 3c804caff3e4e0cabd7259ccb97c4038b509d630 code/generate.py`
 
 ### Extended Functionality
 
-In addition to the command-line options specified in [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), the enhanced [generate script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/generate.py) includes the following -
+In addition to the command-line options specified in [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), the [enhanced generate script](code/generate.py) includes the following -
 
 * `-s --save_prediction` save the predicted landmarks and speech array in the folder specified by the `-o` option and disable generation of animation
 * `-l --load_prediction` load predictions from the folder specified by the `-i` option and generate a painted face animation in the folder specified by the `-o` option. This option expects the input folder to contain pairs of files with the same name but different extensions - `.wav` and `.npy`
 
 #### Examples
 
-Save the landmarks predicted and speech vector using the [ID_CNN](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/tree/master/pre_trained) model from audio in `replic/samples/obama2s/` to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file in `replic/pred_out/`
+Save the landmarks predicted and speech vector using the [ID_CNN](pre_trained/1D_CNN.pt) model from audio in `replic/samples/obama2s/` to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file in `replic/pred_out/`
 
     python generate.py -i ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out/ -s  
 
@@ -87,7 +87,7 @@ Extract examples from this readme and execute them sequentially
 
     python -c "from test_utils import *; readme_tests()"
 ## Potential adaptation to other models
-The [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) could be adapted to other models besides those created by Eskimez at al. The model's inferred landmarks must be saved in NPY format file with three axes - frame number, landmark number, and coordinates such as [this example](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/replic/samples/obama2s.npy).
+The [replication script](code/replication.py) could be adapted to other models besides those created by Eskimez at al. The model's inferred landmarks must be saved in NPY format file with three axes - frame number, landmark number, and coordinates such as [this example](replic/samples/obama2s.npy).
 
 ## Prerequisites
-In addition to the dependencies of [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), [FFmpeg](https://www.ffmpeg.org/) must be executable from the folder of the [replication script](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py)
+In addition to the dependencies of [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface), [FFmpeg](https://www.ffmpeg.org/) must be executable from the folder of the [replication script](code/replication.py)
