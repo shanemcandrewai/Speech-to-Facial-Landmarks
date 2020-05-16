@@ -415,9 +415,9 @@ class Video:
                 'vstack=inputs=2', '-y',
                 Path(self.video_dir, video_out)], check=True)
 
-    def scale(self, video_in='obama2s.mp4', video_out='obama2s_500.mp4', width=500,
-              height=500):
-        """ scale video """
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-s', str(
-            width) + 'x' + str(height), '-c:a', 'copy', '-y',
+    def draw_text(self, video_in='obama2s_painted_.mp4', video_out='obama2s_painted_t.mp4',
+                  frame_text='frame %{frame_num} %{pts}'):
+        """ add text to video frames """
+        sp.run(['ffmpeg', '-y', '-i', Path(self.video_dir, video_in), '-vf',
+                'drawtext=text=\'' + frame_text + '\'',
                 Path(self.video_dir, video_out)], check=True)
