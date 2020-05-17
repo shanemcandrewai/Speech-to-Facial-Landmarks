@@ -45,7 +45,7 @@ Extract frames from `replic/samples/obama2s.mp4` into `replic/frames/`
 
     python -c "from replication import *; Video('../replic/samples/', frames=Frames('../replic/frames/')).extract_frames('obama2s.mp4')"
 #### Example usage : extract_audio(video_in, audio_out)
-Extract audio in WAV format from video in `replic/samples/` to replic/audio_out
+Extract audio in WAV format from video `replic/samples/obama2s.mp4` to `replic/audio_out/obama2s.wav`
 
     python -c "from replication import *; Video('../replic/samples/', '../replic/audio_out/').extract_audio('obama2s.mp4')"
 #### Example usage : draw_text(video_in, video_out, frame_text)
@@ -53,7 +53,7 @@ Add the frame number and timestamp to video `replic/identity_removed/obama2s.ir_
 
     python -c "from replication import *; Video('../replic/').draw_text('samples/identity_removed/obama2s.ir_painted_.mp4', 'anim_out/obama2s.ir_painted_t.mp4')"
 #### Example usage : stack_h(video_left, video_right, video_out)
-Stack input videos `replic/samples/obama2s/obama2s_painted_t.mp4` and `replic/samples/identity_removed/obama2s.ir_painted_t.mp4' horizontally and for easier visual comparision into `replic/anim_out/`
+Stack input videos `replic/samples/obama2s/obama2s_painted_t.mp4` and `replic/samples/identity_removed/obama2s.ir_painted_t.mp4` horizontally and for easier visual comparision into `replic/anim_out/obama2s_comparison.mp4`
 
     python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_t.mp4', 'identity_removed/obama2s.ir_painted_t.mp4', '../anim_out/obama2s_comparison.mp4')"
 ### class Frames(frames_dir, video, suffix, num_len):
@@ -81,7 +81,7 @@ Following the specification described in the orginal paper, apply Procrustes ana
 ### class Draw(plots_dir, data_proc, dimensions):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage(dpi, annot, lips_only)
-Use procrustes analysis to align and normalise landmarks, plot and save them in `replic/plots/`
+Use procrustes analysis to align and normalise landmarks, plot and save them with annotations in `replic/plots/`
 
     python -c "from replication import *; Draw('../replic/plots/', DataProcess('../replic/data/', 'obama2s.npy')).save_plots_proc(annot=True)"
 ## code/test_utils.py
