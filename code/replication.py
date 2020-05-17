@@ -397,9 +397,8 @@ class Video:
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
-                str(Path(plots_dir, r'%d.png')),
-                '-y', str(Path(self.video_dir, video_out))],
-               check=True)
+                str(Path(plots_dir, r'%0' + str(self.frames.num_len) + 'd.png')),
+                '-y', str(Path(self.video_dir, video_out))], check=True)
 
     def stack_h(self, video_left='obama2s/obama2s_painted_t.mp4',
                 video_right='identity_removed/obama2s.ir_painted_t.mp4',
