@@ -397,8 +397,8 @@ class Video:
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
-                Path(plots_dir, r'%d.png'),
-                '-y', Path(self.video_dir, video_out)],
+                str(Path(plots_dir, r'%d.png')),
+                '-y', str(Path(self.video_dir, video_out))],
                check=True)
 
     def stack_h(self, video_left='obama2s/obama2s_painted_t.mp4',
@@ -429,4 +429,26 @@ class Video:
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
+                str(Path(self.video_dir, video_out))], check=True)
+
+    def prepare_ground_truth(self, video_in='080815_WeeklyAddress.mp4', video_out=None,
+                             frame_text='frame %{frame_num} %{pts}'):
+        """ add text to video frames """
+        if video_out is None:
+            video_out = Path(Path(video_in).parent, Path(
+                Path(video_in).stem + '25t.mp4'))
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', '-r', str(25), str(Path(self.video_dir, video_in)), '-vf',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=660:y=260,crop=500:500:650:250',
+                str(Path(self.video_dir, video_out))], check=True)
+
+    def prepare_anims(self, video_in='080815_WeeklyAddress_painted_.mp4', video_out=None,
+                      frame_text='frame %{frame_num} %{pts}'):
+        """ add text to video frames """
+        if video_out is None:
+            video_out = Path(Path(video_in).parent, Path(
+                Path(video_in).stem + 't.mp4'))
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
+                'scale=500:500,drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
                 str(Path(self.video_dir, video_out))], check=True)
