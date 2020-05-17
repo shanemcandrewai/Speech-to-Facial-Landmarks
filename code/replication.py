@@ -205,6 +205,7 @@ class DataProcess:
         template_2d = np.load(str(template))[:, :2]
         identity_removed = lmarks - closed_mouth + template_2d
         if file_out is not None:
+            Path(self.data_dir, file_out).parent.mkdir(parents=True, exist_ok=True)
             np.save(Path(self.data_dir, file_out), identity_removed)
         return identity_removed
 
@@ -392,6 +393,7 @@ class Video:
 
     def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=30):
         """ create video from images """
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
         sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
@@ -399,10 +401,12 @@ class Video:
                 '-y', Path(self.video_dir, video_out)],
                check=True)
 
-    def stack_h(self, video_left='obama2s/obama2s_painted_.mp4',
-                video_right='identity_removed/obama2s.ir_painted_.mp4',
-                video_out='obama2s_comparison.mp4'):
+    def stack_h(self, video_left='obama2s/obama2s_painted_t.mp4',
+                video_right='identity_removed/obama2s.ir_painted_t.mp4',
+                video_out=None):
         """ stack videos horizontally """
+        if video_out is None:
+            video_out = Path(Path(video_left).stem + '_compare.mp4')
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_left), '-i',
                 Path(self.video_dir, video_right), '-filter_complex',
                 'hstack=inputs=2', '-y',
@@ -410,6 +414,7 @@ class Video:
 
     def stack_v(self, video_top, video_bottom, video_out):
         """ stack videos vertically """
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_top), '-i',
                 Path(self.video_dir, video_bottom), '-filter_complex',
                 'vstack=inputs=2', '-y',
@@ -420,7 +425,8 @@ class Video:
         """ add text to video frames """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
-                Path(video_in).stem + '_t').with_suffix('.mp4'))
+                Path(video_in).stem + 't.mp4'))
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-y', '-i', Path(self.video_dir, video_in), '-vf',
-                'drawtext=text=\'' + frame_text + '\'',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
                 Path(self.video_dir, video_out)], check=True)

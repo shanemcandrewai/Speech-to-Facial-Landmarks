@@ -48,10 +48,14 @@ Extract frames from `replic/samples/obama2s.mp4` into `replic/frames/`
 Extract audio in WAV format from video in `replic/samples/` to replic/audio_out
 
     python -c "from replication import *; Video('../replic/samples/', '../replic/audio_out/').extract_audio('obama2s.mp4')"
-#### Example usage : stack_h(video_left, video_right, video_out)
-Stack input video horizontally and for easier visual comparision into `replic/anim_out/`
+#### Example usage : draw_text(video_in, video_out, frame_text)
+Add the frame number and timestamp to video `replic/identity_removed/obama2s.ir_painted_.mp4` and save as `replic/anim_out/obama2s.ir_painted_t.mp4`
 
-    python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_.mp4', 'identity_removed/obama2s.ir_painted_.mp4', '../anim_out/obama2s_comparison.mp4')"
+    python -c "from replication import *; Video('../replic/').draw_text('samples/identity_removed/obama2s.ir_painted_.mp4', 'anim_out/obama2s.ir_painted_t.mp4')"
+#### Example usage : stack_h(video_left, video_right, video_out)
+Stack input videos `replic/samples/obama2s/obama2s_painted_t.mp4` and `replic/samples/identity_removed/obama2s.ir_painted_t.mp4' horizontally and for easier visual comparision into `replic/anim_out/`
+
+    python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_t.mp4', 'identity_removed/obama2s.ir_painted_t.mp4', '../anim_out/obama2s_comparison.mp4')"
 ### class Frames(frames_dir, video, suffix, num_len):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
 #### Example usage : get_frame_nums()
@@ -71,9 +75,9 @@ First calculate the width of the lips in each frame and filter out outliers. Fro
 
     python -c "from replication import *; print(DataProcess('../replic/data/', 'obama2s.npy').get_closed_mouth_frame())"
 #### Example usage : remove_identity(lmarks, template, file_out)
-Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to `replic/samples/obama2s.ir.npy`
+Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks `replic/samples/obama2s.npy`, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to `replic/data/obama2s.ir.npy`
 
-    python -c "from replication import *; DataProcess('../replic/samples/', 'obama2s.npy').remove_identity(file_out = 'obama2s.ir.npy')"
+    python -c "from replication import *; DataProcess('../replic/', 'samples/obama2s.npy').remove_identity(file_out = 'data/obama2s.ir.npy')"
 ### class Draw(plots_dir, data_proc, dimensions):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage(dpi, annot, lips_only)
