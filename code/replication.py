@@ -307,11 +307,15 @@ class Draw:
                 self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
         plt.savefig(Path(self.plots_dir, str(frame_num) + '.png'))
 
-    def save_plots(self, with_frame=True, annot=False, dpi=96):
+    def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
         """ save line plots """
         _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
                                              self.dimensions['height']/dpi), dpi=dpi)
-        lmarks = self.data_proc.get_all_lmarks()
+        if lmarks is None:
+            lmarks = self.data_proc.get_all_lmarks()
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             if with_frame:
@@ -326,7 +330,8 @@ class Draw:
             self.axes.invert_yaxis()
             if annot:
                 self.annotate(frame_num, lmarks)
-            plt.savefig(Path(self.plots_dir, str(frame_num) + '.png'))
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.data_proc.frames.num_len) + '.png'))
 
     def annotate(self, frame_num, lmarks):
         """ Annote image with landmark and frame numbers """
@@ -391,7 +396,7 @@ class Video:
                 str(Path(frame_dir, r'%0' + str(
                     self.frames.num_len) + 'd' + self.frames.suffix))], check=True)
 
-    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=30):
+    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=25):
         """ create video from images """
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         if plots_dir is None:
