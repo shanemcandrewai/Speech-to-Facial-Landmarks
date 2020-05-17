@@ -377,8 +377,8 @@ class Video:
         if audio_out is None:
             audio_out = Path(self.audio_dir, Path(video_in).with_suffix('.wav'))
         Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-y',
-                audio_out], check=True)
+        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)), '-y',
+                str(audio_out)], check=True)
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
@@ -407,10 +407,10 @@ class Video:
         """ stack videos horizontally """
         if video_out is None:
             video_out = Path(Path(video_left).stem + '_compare.mp4')
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_left), '-i',
-                Path(self.video_dir, video_right), '-filter_complex',
+        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_left)), '-i',
+                str(Path(self.video_dir, video_right)), '-filter_complex',
                 'hstack=inputs=2', '-y',
-                Path(self.video_dir, video_out)], check=True)
+                str(Path(self.video_dir, video_out))], check=True)
 
     def stack_v(self, video_top, video_bottom, video_out):
         """ stack videos vertically """
@@ -427,6 +427,6 @@ class Video:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + 't.mp4'))
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-y', '-i', Path(self.video_dir, video_in), '-vf',
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
-                Path(self.video_dir, video_out)], check=True)
+                str(Path(self.video_dir, video_out))], check=True)
