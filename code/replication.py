@@ -205,6 +205,7 @@ class DataProcess:
         template_2d = np.load(str(template))[:, :2]
         identity_removed = lmarks - closed_mouth + template_2d
         if file_out is not None:
+            Path(self.data_dir, file_out).parent.mkdir(parents=True, exist_ok=True)
             np.save(Path(self.data_dir, file_out), identity_removed)
         return identity_removed
 
@@ -306,11 +307,15 @@ class Draw:
                 self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
         plt.savefig(Path(self.plots_dir, str(frame_num) + '.png'))
 
-    def save_plots(self, with_frame=True, annot=False, dpi=96):
+    def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
         """ save line plots """
         _, self.axes = plt.subplots(figsize=(self.dimensions['width']/dpi,
                                              self.dimensions['height']/dpi), dpi=dpi)
-        lmarks = self.data_proc.get_all_lmarks()
+        if lmarks is None:
+            lmarks = self.data_proc.get_all_lmarks()
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
         for frame_num in range(lmarks.shape[0]):
             self.axes.clear()
             if with_frame:
@@ -325,7 +330,8 @@ class Draw:
             self.axes.invert_yaxis()
             if annot:
                 self.annotate(frame_num, lmarks)
-            plt.savefig(Path(self.plots_dir, str(frame_num) + '.png'))
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.data_proc.frames.num_len) + '.png'))
 
     def annotate(self, frame_num, lmarks):
         """ Annote image with landmark and frame numbers """
@@ -376,8 +382,8 @@ class Video:
         if audio_out is None:
             audio_out = Path(self.audio_dir, Path(video_in).with_suffix('.wav'))
         Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-y',
-                audio_out], check=True)
+        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)), '-y',
+                str(audio_out)], check=True)
 
     def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
@@ -390,34 +396,70 @@ class Video:
                 str(Path(frame_dir, r'%0' + str(
                     self.frames.num_len) + 'd' + self.frames.suffix))], check=True)
 
-    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=30):
+    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=25,
+                     frame_text='frame %{frame_num} %{pts}'):
         """ create video from images """
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
-        sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
-                Path(plots_dir, r'%d.png'),
-                '-y', Path(self.video_dir, video_out)],
-               check=True)
+        sp.run(['ffmpeg', '-y', '-f', 'image2', '-framerate', str(framerate), '-i',
+                str(Path(plots_dir, r'%0' + str(self.frames.num_len) + 'd.png')), '-vf',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
+                str(Path(self.video_dir, video_out))], check=True)
 
-    def stack_h(self, video_left='obama2s/obama2s_painted_.mp4',
-                video_right='identity_removed/obama2s.ir_painted_.mp4',
-                video_out='obama2s_comparison.mp4'):
+    def stack_h(self, video_left='obama2s/obama2s_painted_t.mp4',
+                video_right='identity_removed/obama2s.ir_painted_t.mp4',
+                video_out=None):
         """ stack videos horizontally """
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_left), '-i',
-                Path(self.video_dir, video_right), '-filter_complex',
+        if video_out is None:
+            video_out = Path(Path(video_left).stem + '_compare.mp4')
+        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_left)), '-i',
+                str(Path(self.video_dir, video_right)), '-filter_complex',
                 'hstack=inputs=2', '-y',
-                Path(self.video_dir, video_out)], check=True)
+                str(Path(self.video_dir, video_out))], check=True)
 
-    def stack_v(self, video_top, video_bottom, video_out):
+    def stack_v(self, video_top, video_bottom, video_out=None):
         """ stack videos vertically """
+        if video_out is None:
+            video_out = Path(Path(video_top).stem + '_v.mp4')
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_top), '-i',
                 Path(self.video_dir, video_bottom), '-filter_complex',
                 'vstack=inputs=2', '-y',
                 Path(self.video_dir, video_out)], check=True)
 
-    def scale(self, video_in='obama2s.mp4', video_out='obama2s_500.mp4', width=500,
-              height=500):
-        """ scale video """
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_in), '-s', str(
-            width) + 'x' + str(height), '-c:a', 'copy', '-y',
-                Path(self.video_dir, video_out)], check=True)
+    def draw_text(self, video_in='obama2s_painted_.mp4', video_out=None,
+                  frame_text='frame %{frame_num} %{pts}'):
+        """ add text to video frames """
+        if video_out is None:
+            video_out = Path(Path(video_in).parent, Path(
+                Path(video_in).stem + 't.mp4'))
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
+                str(Path(self.video_dir, video_out))], check=True)
+
+    def prepare_ground_truth(self, video_in='080815_WeeklyAddress.mp4',
+                             video_out=None,
+                             frame_text='frame %{frame_num} %{pts}'):
+        """ add text to video frames """
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-r',
+                str(25), str(Path(self.video_dir, 'temp.mp4'))], check=True)
+        if video_out is None:
+            video_out = Path(Path(video_in).parent, Path(
+                Path(video_in).stem + '_25t.mp4'))
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, 'temp.mp4')), '-vf',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=810:y=260,crop=500:500:800:250',
+                str(Path(self.video_dir, video_out))], check=True)
+
+    def prepare_anims(self, video_in='080815_WeeklyAddress_painted_.mp4',
+                      video_out=None, frame_text='frame %{frame_num} %{pts}'):
+        """ add text to video frames """
+        if video_out is None:
+            video_out = Path(Path(video_in).parent, Path(
+                Path(video_in).stem + 't.mp4'))
+        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
+                'scale=500:500,drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
+                str(Path(self.video_dir, video_out))], check=True)
