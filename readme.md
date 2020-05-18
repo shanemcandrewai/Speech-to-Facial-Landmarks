@@ -4,7 +4,7 @@
 
 This project is an attempt to replicate some of the results from Eskimez et al's paper [Noise-Resilient Training Method for Face Landmark Generation From Speech](https://ieeexplore.ieee.org/document/8871109).
 
-In this [comparison video](replic/samples/080815_WeeklyAddress_25t_compare_v.mp4), we see an original video of Barack Obama, a plot of the facial landmarks extracted with the [Dlib toolkit](http://dlib.net/) on the top-right, the inferred animation created with Easkimez et al's script on the bottom-left and finally an animation produced by my attempt to replicate the method in the original paper on the bottom right.
+In this [comparison video](replic/samples/080815_WeeklyAddress_25t_compare_v.mp4), we see an original video of Barack Obama, a plot of the facial landmarks extracted with the [Dlib toolkit](http://dlib.net/) on the top-right, the inferred animation created with Easkimez et al's script on the bottom-left and finally an animation produced by my attempt to replicate the method in the original paper on the bottom-right.
 
 
 The majority of the files are identical to [Noise-Resilient Training Method](https://github.com/eeskimez/noise_resilient_3dtface) from which this project is forked. Apart from this readme, the two most important enhancements and some testing utilities are described below -
