@@ -396,14 +396,16 @@ class Video:
                 str(Path(frame_dir, r'%0' + str(
                     self.frames.num_len) + 'd' + self.frames.suffix))], check=True)
 
-    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=25):
+    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=25,
+                     frame_text='frame %{frame_num} %{pts}'):
         """ create video from images """
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
-        sp.run(['ffmpeg', '-f', 'image2', '-framerate', str(framerate), '-i',
-                str(Path(plots_dir, r'%0' + str(self.frames.num_len) + 'd.png')),
-                '-y', str(Path(self.video_dir, video_out))], check=True)
+        sp.run(['ffmpeg', '-y', '-f', 'image2', '-framerate', str(framerate), '-i',
+                str(Path(plots_dir, r'%0' + str(self.frames.num_len) + 'd.png')), '-vf',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
+                str(Path(self.video_dir, video_out))], check=True)
 
     def stack_h(self, video_left='obama2s/obama2s_painted_t.mp4',
                 video_right='identity_removed/obama2s.ir_painted_t.mp4',
@@ -416,8 +418,10 @@ class Video:
                 'hstack=inputs=2', '-y',
                 str(Path(self.video_dir, video_out))], check=True)
 
-    def stack_v(self, video_top, video_bottom, video_out):
+    def stack_v(self, video_top, video_bottom, video_out=None):
         """ stack videos vertically """
+        if video_out is None:
+            video_out = Path(Path(video_top).stem + '_v.mp4')
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', Path(self.video_dir, video_top), '-i',
                 Path(self.video_dir, video_bottom), '-filter_complex',
@@ -440,9 +444,9 @@ class Video:
         """ add text to video frames """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
-                Path(video_in).stem + '25t.mp4'))
+                Path(video_in).stem + '_25t.mp4'))
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-y', '-i', '-r', str(25), str(Path(self.video_dir, video_in)), '-vf',
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-r', str(25), '-vf',
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=660:y=260,crop=500:500:650:250',
                 str(Path(self.video_dir, video_out))], check=True)
 
