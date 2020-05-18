@@ -439,21 +439,22 @@ class Video:
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
                 str(Path(self.video_dir, video_out))], check=True)
 
-    def prepare_ground_truth(self, video_in='080815_WeeklyAddress.mp4', video_out=None,
+    def prepare_ground_truth(self, video_in='080815_WeeklyAddress.mp4',
+                             video_out=None,
                              frame_text='frame %{frame_num} %{pts}'):
         """ add text to video frames """
-        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-r', str(25),
-                str(Path(self.video_dir, 'temp.mp4'))], check=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-r',
+                str(25), str(Path(self.video_dir, 'temp.mp4'))], check=True)
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + '_25t.mp4'))
         Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, 'temp.mp4')), '-vf',
-                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=660:y=260,crop=500:500:650:250',
+                'drawtext=text=\'' + frame_text + '\':fontsize=20:x=810:y=260,crop=500:500:800:250',
                 str(Path(self.video_dir, video_out))], check=True)
 
-    def prepare_anims(self, video_in='080815_WeeklyAddress_painted_.mp4', video_out=None,
-                      frame_text='frame %{frame_num} %{pts}'):
+    def prepare_anims(self, video_in='080815_WeeklyAddress_painted_.mp4',
+                      video_out=None, frame_text='frame %{frame_num} %{pts}'):
         """ add text to video frames """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
