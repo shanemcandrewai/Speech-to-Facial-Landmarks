@@ -194,7 +194,8 @@ class DataProcess:
             lmarks_filtered, lip_bottom], axis=2)
         return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
-    def remove_identity(self, lmarks=None, template=None, file_out=None, zscore=0.1):
+    def remove_identity(self, lmarks=None, template=None, file_out=None,
+                        zscore=0.1):
         """ current frame - the closed mouth frame + template """
         if lmarks is None:
             lmarks = self.get_procrustes()
@@ -471,14 +472,17 @@ class Analysis:
         else:
             self.video = video
 
-    def vid_to_npy(self, video_in='080815_WeeklyAddress.mp4', pred_out=None, data_proc=None):
-        """ Save predicted landmarks from the pre-trained model tegether with extracted landmarks
-            pre-processed and animated """
+    def video_to_lmarks(self, video_in='080815_WeeklyAddress.mp4', pred_out=None,
+                        data_proc=None):
+        """ Save predicted landmarks from the pre-trained model tegether with
+        extracted landmarks pre-processed and animated """
         if pred_out is None:
-            pred_out = Path('..', 'replic', 'pred_out', Path(video_in).stem + 'po.npy')
+            pred_out = Path('..', 'replic', 'pred_out')
         if data_proc is None:
-            data_proc = DataProcess(extract_file=Path(video_in).with_suffix('.npy'))
+            data_proc = DataProcess(extract_file=Path(video_in).with_suffix(
+                '.npy'))
         self.video.extract_audio(video_in)
         sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
-                '../pre_trained/1D_CNN.pt', '-o', Path(data_proc.data_dir, 'po'), '-s'], check=True)
+                '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
         data_proc.remove_identity(file_out=Path(video_in).stem + 'po.npy')
+#    python -c "from replication import *; DataProcess('../replic/', 'samples/obama2s.npy').remove_identity(file_out = 'data/obama2s.ir.npy')"
