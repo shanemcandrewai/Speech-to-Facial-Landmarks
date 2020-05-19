@@ -442,7 +442,7 @@ class Video:
     def prepare_ground_truth(self, video_in='080815_WeeklyAddress.mp4',
                              video_out=None,
                              frame_text='frame %{frame_num} %{pts}'):
-        """ add text to video frames """
+        """ adjust the framerate to 25fps, crop and add text to the source video """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + '_25t.mp4'))
@@ -454,7 +454,7 @@ class Video:
 
     def prepare_anims(self, video_in='080815_WeeklyAddress_painted_.mp4',
                       video_out=None, frame_text='frame %{frame_num} %{pts}'):
-        """ add text to video frames """
+        """ scale down, crop and add text to the animations """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + 't.mp4'))
@@ -462,3 +462,20 @@ class Video:
         sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
                 'scale=500:500,drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
                 str(Path(self.video_dir, video_out))], check=True)
+
+class Analysis:
+    """ Data extraction and analysis """
+    def __init__(self, video=None):
+        if video is None:
+            self.video = Video()
+        else:
+            self.video = video
+
+    def vid_to_npy(self, video_in='080815_WeeklyAddress.mp4', pred_out=None, data_proc=None):
+        """ Save predicted landmarks from the pre-trained model tegether with extracted landmarks
+            pre-processed and animated """
+        if pred_out is None:
+            pred_out = Path('..', 'replic', 'pred_out', Path(video_in).stem + 'po.npy')
+        if data_proc is None:
+            data_proc = DataProcess(extract_file=Path(video_in).with_suffix('.npy'))
+#        sp.run(['python', 'generate.py', '-i', data_proc ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out/ -s  

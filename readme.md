@@ -20,6 +20,8 @@ In addition to the command-line options specified in [Noise-Resilient Training M
 * `-s --save_prediction` save the predicted landmarks and speech array in the folder specified by the `-o` option and disable generation of animation
 * `-l --load_prediction` load predictions from the folder specified by the `-i` option and generate a painted face animation in the folder specified by the `-o` option. This option expects the input folder to contain pairs of files with the same name but different extensions - `.wav` and `.npy`
 
+These enhancements were susequently merged into the [upstream repository](https://github.com/eeskimez/noise_resilient_3dtface/commit/59536f4ebe43bcabd0b2f90a93974552e87dc553)
+
 #### Examples
 
 Save the landmarks predicted and speech vector using the [ID_CNN](pre_trained/1D_CNN.pt) model from audio in `replic/samples/obama2s/` to an [NPY format](https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format) file in `replic/pred_out/`
