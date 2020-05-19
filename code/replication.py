@@ -478,4 +478,7 @@ class Analysis:
             pred_out = Path('..', 'replic', 'pred_out', Path(video_in).stem + 'po.npy')
         if data_proc is None:
             data_proc = DataProcess(extract_file=Path(video_in).with_suffix('.npy'))
-#        sp.run(['python', 'generate.py', '-i', data_proc ../replic/samples/obama2s/ -m ../pre_trained/1D_CNN.pt -o ../replic/pred_out/ -s  
+        self.video.extract_audio(video_in)
+        sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
+                '../pre_trained/1D_CNN.pt', '-o', Path(data_proc.data_dir, 'po'), '-s'], check=True)
+        data_proc.remove_identity(file_out=Path(video_in).stem + 'po.npy')
