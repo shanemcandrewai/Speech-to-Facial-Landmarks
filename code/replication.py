@@ -51,13 +51,11 @@ class DlibProcess:
     """ Dlib facial landmark extraction manager """
     rgb_image = None
     frame_num = None
-    faces = None
     shape = None
     detector = None
     predictor = None
 
-    @classmethod
-    def init(cls, model_dir=None,
+    def init(self, model_dir=None,
              model_url='https://raw.github.com/davisking/dlib-models/master/'
                        'shape_predictor_68_face_landmarks.dat.bz2'):
         """ initialize DLib, download model if neccessary """
@@ -65,56 +63,43 @@ class DlibProcess:
             model_file = Path(Path('..', 'data'), Path(model_url).stem)
         else:
             model_file = Path(model_dir, Path(model_url).stem)
-        cls.detector = dlib.get_frontal_face_detector()
         if not model_file.is_file():
             print('Model ' + str(model_file) + ' not found')
             print('Downloading from ' + model_url)
             with urllib.request.urlopen(model_url) as response, open(
                     model_file, 'wb') as model:
                 model.write(bz2.decompress(response.read()))
-        cls.predictor = dlib.shape_predictor(str(model_file))
+        self.detector = dlib.get_frontal_face_detector()
+        self.predictor = dlib.shape_predictor(str(model_file))
 
-    def load_image(self, frame_num=30, frames=None):
+    def get_lmarks(self, frame_num=30, frames=None, face_num=0):
         """ load image and attempt to extract faces """
-        if frames is None:
-            image_file_path = Frames.get_file_path(frame_num)
-        else:
-            image_file_path = frames.get_file_path(frame_num)
-        faces = None
-        shape = None
-        rgb_image = dlib.load_rgb_image(str(image_file_path))
-        if self.rgb_image is not None:
-            frame_num = frame_num
-            print('Frame ', frame_num, ' extracting faces')
-            faces = detector(self.rgb_image, 1)
-
-    def get_shape(self, frame_num=30):
-        """ Retrieve or extract landmarks from face as dlib.points """
-        if shape is None or frame_num != self.frame_num:
-            self.extract_shape(frame_num)
-        return self.shape
-
-    def extract_shape(self, frame_num=30):
-        """ Extract landmarks from face as dlib.points """
-        if self.faces is None or frame_num != self.frame_num:
-            self.load_image(frame_num)
-        if len(self.faces) > 0:
-            print('Frame ', frame_num, ' face ', 0, ' extracting landmarks')
-            self.shape = self.predictor(self.rgb_image, self.faces[0])
-
-    def get_lmarks(self, frame_num=30):
-        """ Get landmarks from face as ndarray """
-        if self.get_shape(frame_num) is None:
+        if frame_num != self.frame_num or self.shape is None:
+            if frames is None:
+                image_file_path = Frames.get_file_path(frame_num)
+            else:
+                image_file_path = frames.get_file_path(frame_num)
+            if self.predictor is None:
+                self.init()
+            self.rgb_image = dlib.load_rgb_image(str(image_file_path))
+            if self.rgb_image is not None:
+                print('Frame ', frame_num, ' extracting faces')
+                faces = self.detector(self.rgb_image, 1)
+                if len(faces) > 0:
+                    print('Frame ', frame_num, ' face ', face_num, ' extracting landmarks')
+                    self.frame_num = frame_num
+                    self.shape = self.predictor(self.rgb_image, faces[face_num])
+        if self.shape is None:
             return np.full((1, 68, 2), np.nan)
         return np.array([(part.x, part.y) for part in self.shape.parts()]).reshape((1, 68, 2))
 
-    def display_overlay(self, frame_num=30):
+    def display_overlay(self, frame_num=30, frames=None, face_num=0):
         """ Display image overlayed with landmarks """
         win = dlib.image_window()
         win.clear_overlay()
-        self.load_image(frame_num)
+        self.get_lmarks(frame_num, frames, face_num)
         win.set_image(self.rgb_image)
-        if self.get_shape(frame_num) is not None:
+        if self.shape is not None:
             win.add_overlay(self.shape)
         dlib.hit_enter_to_continue()
 
