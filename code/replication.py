@@ -13,29 +13,32 @@ import dlib
 
 class Frames:
     """ Frame file manager """
-    def __init__(self, frames_dir=None, video=None, suffix='.jpeg', num_len=4):
+    frames_dir = None
+    suffix = '.jpeg'
+    num_len = 4
+    video = None
+
+    @classmethod
+    def init_frames_dir(cls, frames_dir=None):
         if frames_dir is None:
             self.frames_dir = Path('..', 'replic', 'frames')
         else:
             self.frames_dir = Path(frames_dir)
-        if video is None:
-            self.video = Path('..', 'replic', 'samples', 'obama2s.mp4')
-        else:
-            self.video = Path(video)
         self.frames_dir.mkdir(parents=True, exist_ok=True)
-        self.suffix = suffix
-        self.num_len = num_len
 
-    def get_file_path(self, frame_num=30):
+    @classmethod
+    def get_file_path(cls, frame_num=30):
         """ Build file path from frame number """
         return Path(self.frames_dir, str(frame_num).zfill(
             self.num_len)).with_suffix(self.suffix)
 
-    def get_frame_file_names(self):
+    @classmethod
+    def get_frame_file_names(cls):
         """ Get list of frame files """
         return sorted(self.frames_dir.glob('*' + self.suffix))
 
-    def get_frame_nums(self):
+    @classmethod
+    def get_frame_nums(cls):
         """ Get list of frame numbers """
         frames = self.get_frame_file_names()
         return [int(Path(frame).stem) for frame in frames]
