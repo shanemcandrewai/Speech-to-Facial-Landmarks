@@ -16,72 +16,81 @@ class Frames:
     frames_dir = None
     suffix = '.jpeg'
     num_len = 4
-    video = None
 
     @classmethod
     def init_frames_dir(cls, frames_dir=None):
+        """ Set and create the frame directory is neccessary """
         if frames_dir is None:
-            self.frames_dir = Path('..', 'replic', 'frames')
+            cls.frames_dir = Path('..', 'replic', 'frames')
         else:
-            self.frames_dir = Path(frames_dir)
-        self.frames_dir.mkdir(parents=True, exist_ok=True)
+            cls.frames_dir = Path(frames_dir)
+        cls.frames_dir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
     def get_file_path(cls, frame_num=30):
         """ Build file path from frame number """
-        return Path(self.frames_dir, str(frame_num).zfill(
-            self.num_len)).with_suffix(self.suffix)
+        if cls.frames_dir is None:
+            cls.init_frames_dir()
+        return str(Path(cls.frames_dir, str(frame_num).zfill(
+            cls.num_len)).with_suffix(cls.suffix))
 
     @classmethod
     def get_frame_file_names(cls):
         """ Get list of frame files """
-        return sorted(self.frames_dir.glob('*' + self.suffix))
+        if cls.frames_dir is None:
+            cls.init_frames_dir()
+        return sorted(cls.frames_dir.glob('*' + cls.suffix))
 
     @classmethod
     def get_frame_nums(cls):
         """ Get list of frame numbers """
-        frames = self.get_frame_file_names()
+        frames = cls.get_frame_file_names()
         return [int(Path(frame).stem) for frame in frames]
 
 class DlibProcess:
     """ Dlib facial landmark extraction manager """
-    def __init__(self, model_dir=None,
-                 model_url='https://raw.github.com/davisking/dlib-models/master/'
-                           'shape_predictor_68_face_landmarks.dat.bz2'):
+    rgb_image = None
+    frame_num = None
+    faces = None
+    shape = None
+    detector = None
+    predictor = None
+
+    @classmethod
+    def init(cls, model_dir=None,
+             model_url='https://raw.github.com/davisking/dlib-models/master/'
+                       'shape_predictor_68_face_landmarks.dat.bz2'):
+        """ initialize DLib, download model if neccessary """
         if model_dir is None:
-            self.model_file = Path(Path('..', 'data'), Path(model_url).stem)
+            model_file = Path(Path('..', 'data'), Path(model_url).stem)
         else:
-            self.model_file = Path(model_dir, Path(model_url).stem)
-        self.detector = dlib.get_frontal_face_detector()
-        self.rgb_image = None
-        self.frame_num = None
-        self.faces = None
-        self.shape = None
-        if not self.model_file.is_file():
-            print('Model ' + str(self.model_file) + ' not found')
+            model_file = Path(model_dir, Path(model_url).stem)
+        cls.detector = dlib.get_frontal_face_detector()
+        if not model_file.is_file():
+            print('Model ' + str(model_file) + ' not found')
             print('Downloading from ' + model_url)
             with urllib.request.urlopen(model_url) as response, open(
-                    self.model_file, 'wb') as model:
+                    model_file, 'wb') as model:
                 model.write(bz2.decompress(response.read()))
-        self.predictor = dlib.shape_predictor(str(self.model_file))
+        cls.predictor = dlib.shape_predictor(str(model_file))
 
     def load_image(self, frame_num=30, frames=None):
         """ load image and attempt to extract faces """
         if frames is None:
-            image_file_path = Frames().get_file_path(frame_num)
+            image_file_path = Frames.get_file_path(frame_num)
         else:
             image_file_path = frames.get_file_path(frame_num)
-        self.faces = None
-        self.shape = None
-        self.rgb_image = dlib.load_rgb_image(str(image_file_path))
+        faces = None
+        shape = None
+        rgb_image = dlib.load_rgb_image(str(image_file_path))
         if self.rgb_image is not None:
-            self.frame_num = frame_num
+            frame_num = frame_num
             print('Frame ', frame_num, ' extracting faces')
-            self.faces = self.detector(self.rgb_image, 1)
+            faces = detector(self.rgb_image, 1)
 
     def get_shape(self, frame_num=30):
         """ Retrieve or extract landmarks from face as dlib.points """
-        if self.shape is None or frame_num != self.frame_num:
+        if shape is None or frame_num != self.frame_num:
             self.extract_shape(frame_num)
         return self.shape
 

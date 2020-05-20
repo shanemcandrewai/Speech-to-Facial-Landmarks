@@ -48,7 +48,7 @@ Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpe
 #### Example usage : extract_frames(video_in, start_number, quality)
 Extract frames from `replic/samples/obama2s.mp4` into `replic/frames/`
 
-    python -c "from replication import *; Video('../replic/samples/', frames=Frames('../replic/frames/')).extract_frames('obama2s.mp4')"
+    python -c "from replication import *; Video('../replic/samples/', frames=Frames.init_frames_dir('../replic/frames/')).extract_frames('obama2s.mp4')"
 #### Example usage : extract_audio(video_in, audio_out)
 Extract audio in WAV format from video `replic/samples/obama2s.mp4` to `replic/audio_out/obama2s.wav`
 
@@ -66,7 +66,7 @@ Helper class used to manage a folder of frames extracted from source video. Each
 #### Example usage : get_frame_nums()
 Get frame numbers from `replic/frames/`
 
-    python -c "from replication import *; print(Frames('../replic/frames').get_frame_nums())"
+    python -c "from replication import *; print(Frames.get_frame_nums())"
 ### class DlibProcess(model_dir, model_url)
 Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
 #### Example usage : display_overlay(frame_num)
