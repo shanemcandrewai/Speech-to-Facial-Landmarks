@@ -48,19 +48,19 @@ Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpe
 #### Example usage : extract_frames(video_in, start_number, quality)
 Extract frames from `replic/samples/obama2s.mp4` into `replic/frames/`
 
-    python -c "from replication import *; Video('../replic/samples/', frames=Frames.init_frames_dir('../replic/frames/')).extract_frames('obama2s.mp4')"
+    python -c "from replication import *; Video.extract_frames('../replic/samples/obama2s.mp4')"
 #### Example usage : extract_audio(video_in, audio_out)
-Extract audio in WAV format from video `replic/samples/obama2s.mp4` to `replic/audio_out/obama2s.wav`
+Extract audio in WAV format from video `replic/samples/obama2s.mp4` to `replic/audio/obama2s.wav`
 
-    python -c "from replication import *; Video('../replic/samples/', '../replic/audio_out/').extract_audio('obama2s.mp4')"
+    python -c "from replication import *; Video.extract_audio('../replic/samples/obama2s.mp4')"
 #### Example usage : draw_text(video_in, video_out, frame_text)
 Add the frame number and timestamp to video `replic/identity_removed/obama2s.ir_painted_.mp4` and save as `replic/anim_out/obama2s.ir_painted_t.mp4`
 
-    python -c "from replication import *; Video('../replic/').draw_text('samples/identity_removed/obama2s.ir_painted_.mp4', 'anim_out/obama2s.ir_painted_t.mp4')"
+    python -c "from replication import *; Video.draw_text('samples/identity_removed/obama2s.ir_painted_.mp4', '../replic/', 'anim_out/obama2s.ir_painted_t.mp4')"
 #### Example usage : stack_h(video_left, video_right, video_out)
 Stack input videos `replic/samples/obama2s/obama2s_painted_t.mp4` and `replic/samples/identity_removed/obama2s.ir_painted_t.mp4` horizontally and for easier visual comparision into `replic/anim_out/obama2s_comparison.mp4`
 
-    python -c "from replication import *; Video('../replic/samples/').stack_h('obama2s/obama2s_painted_t.mp4', 'identity_removed/obama2s.ir_painted_t.mp4', '../anim_out/obama2s_comparison.mp4')"
+    python -c "from replication import *; Video.stack_h('obama2s/obama2s_painted_t.mp4', 'identity_removed/obama2s.ir_painted_t.mp4', '../replic/samples', '../anim_out/obama2s_comp_h.mp4')"
 ### class Frames(frames_dir, video, suffix, num_len):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
 #### Example usage : get_frame_nums()

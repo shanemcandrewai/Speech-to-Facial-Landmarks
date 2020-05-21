@@ -13,32 +13,25 @@ import dlib
 
 class Frames:
     """ Frame file manager """
-    frames_dir = None
+    frames_dir = Path('..', 'replic', 'frames')
     suffix = '.jpeg'
     num_len = 4
 
     @classmethod
-    def init_frames_dir(cls, frames_dir=None):
+    def set_frames_dir(cls, frames_dir):
         """ Set and create the frame directory if neccessary """
-        if frames_dir is None:
-            cls.frames_dir = Path('..', 'replic', 'frames')
-        else:
-            cls.frames_dir = Path(frames_dir)
+        cls.frames_dir = Path(frames_dir)
         cls.frames_dir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
     def get_file_path(cls, frame_num=30):
         """ Build file path from frame number """
-        if cls.frames_dir is None:
-            cls.init_frames_dir()
         return str(Path(cls.frames_dir, str(frame_num).zfill(
             cls.num_len)).with_suffix(cls.suffix))
 
     @classmethod
     def get_frame_file_names(cls):
         """ Get list of frame files """
-        if cls.frames_dir is None:
-            cls.init_frames_dir()
         return sorted(cls.frames_dir.glob('*' + cls.suffix))
 
     @classmethod
@@ -54,12 +47,12 @@ class DlibProcess:
     shape = None
     detector = None
     predictor = None
-    frames = None
+    frames = Frames
     lmarks = np.empty((0, 68, 2))
-    lmarks_file = None
+    lmarks_file = Path('..', 'replic', 'data', 'lmarks.npy')
 
     @classmethod
-    def init(cls, model_dir=None, frames=None, lmarks_file=None,
+    def init(cls, model_dir=None, frames_dir=None, lmarks_file=None,
              model_url='https://raw.github.com/davisking/dlib-models/master/'
                        'shape_predictor_68_face_landmarks.dat.bz2'):
         """ initialize DLib, download model if neccessary """
@@ -68,14 +61,10 @@ class DlibProcess:
         else:
             model_file = Path(model_dir, Path(model_url).stem)
 
-        if frames is None:
-            cls.frames = Frames
-        else:
-            cls.frames = frames
+        if frames_dir is not None:
+            cls.frames.set_frames_dir(frames_dir)
 
-        if lmarks_file is None:
-            cls.lmarks_file = Path('..', 'replic', 'data', 'lmarks.npy')
-        else:
+        if lmarks_file is not None:
             cls.lmarks_file = Path(lmarks_file)
         cls.lmarks_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -138,22 +127,12 @@ class DlibProcess:
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    dlib_process = None
-
-    @classmethod
-    def init(cls, dlib_process=None):
-        """ Initilize DlibProcess """
-        if dlib_process is None:
-            cls.dlib_process = DlibProcess
-        else:
-            cls.dlib_process = dlib_process
+    dlib_process = DlibProcess
 
     @classmethod
     def get_procrustes(cls, lmarks=None, lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
         if lmarks is None:
-            if cls.dlib_process is None:
-                cls.init()
             lmarks = cls.dlib_process.get_all_lmarks()
         if lips_only:
             lmarks = lmarks[:, 48:, :]
@@ -374,52 +353,48 @@ class Draw:
 
 class Video:
     """ FFmpeg video processing manager """
-    video_dir = None
-    audio_dir = None
-    frames = None
+    video_dir = Path('..', 'replic', 'video')
+    audio_dir = Path('..', 'replic', 'audio')
+    frames = Frames
 
     @classmethod
-    def init(cls, video_dir=None, audio_dir=None, frames=None):
-        """ Set up default directories """
-        if video_dir is None:
-            cls.video_dir = Path('..', 'replic', 'video')
-        else:
-            cls.video_dir = Path(video_dir)
-        if audio_dir is None:
-            cls.audio_dir = Path('..', 'replic', 'audio')
-        else:
-            cls.audio_dir = Path(audio_dir)
-        if frames is None:
-            cls.frames = Frames()
-        else:
-            cls.frames = frames
-
-    @classmethod
-    def extract_audio(cls, video_in='obama2s.mp4',
+    def extract_audio(cls, video_in='../replic/samples/obama2s.mp4',
                       audio_out=None):
         """ Extract audio from video sample """
         if audio_out is None:
-            audio_out = Path(cls.audio_dir, Path(video_in).with_suffix('.wav'))
+            audio_out = Path(video_in).with_suffix('.wav').name
+        if Path(video_in).parent != Path():
+            cls.video_dir = Path(video_in).parent
+            video_in = Path(video_in).name
+        if Path(audio_out).parent != Path():
+            cls.audio_dir = Path(audio_out).parent
+            audio_out = Path(audio_out).name
         Path(cls.audio_dir).mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', str(Path(cls.video_dir, video_in)), '-y',
-                str(audio_out)], check=True)
+                str(Path(cls.audio_dir, audio_out))], check=True)
 
     @classmethod
-    def extract_frames(cls, video_in='obama2s.mp4', start_number=0, quality=5):
+    def extract_frames(cls, video_in='../replic/samples/obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
-        frame_dir = Path(cls.frames.frames_dir)
-        if frame_dir.is_dir():
-            shutil.rmtree(frame_dir)
-        frame_dir.mkdir(parents=True, exist_ok=True)
+        if Path(video_in).parent != Path():
+            cls.video_dir = Path(video_in).parent
+            video_in = Path(video_in).name
+        frames_dir = cls.frames.frames_dir
+        if frames_dir.is_dir():
+            shutil.rmtree(frames_dir)
+        frames_dir.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', str(Path(cls.video_dir, video_in)),
                 '-start_number', str(start_number), '-qscale:v', str(quality),
-                str(Path(frame_dir, r'%0' + str(
+                str(Path(frames_dir, r'%0' + str(
                     cls.frames.num_len) + 'd' + cls.frames.suffix))], check=True)
 
     @classmethod
     def create_video(cls, video_out='plots.mp4', plots_dir=None, framerate=25,
                      frame_text='frame %{frame_num} %{pts}'):
         """ create video from images """
+        if Path(video_out).parent != Path():
+            cls.video_dir = Path(video_out).parent
+            video_out = Path(video_out).name
         Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
@@ -431,47 +406,79 @@ class Video:
     @classmethod
     def stack_h(cls, video_left='obama2s/obama2s_painted_t.mp4',
                 video_right='identity_removed/obama2s.ir_painted_t.mp4',
-                video_out=None):
+                video_dir='../replic/samples',
+                video_out='../anim_out/obama2s.comp_h.mp4'):
         """ stack videos horizontally """
+        if video_dir is None:
+            video_dir = cls.video_dir
+        video_left = Path(video_dir, video_left)
+        video_right = Path(video_dir, video_right)
         if video_out is None:
-            video_out = Path(Path(video_left).stem + '_compare.mp4')
-        sp.run(['ffmpeg', '-i', str(Path(cls.video_dir, video_left)), '-i',
-                str(Path(cls.video_dir, video_right)), '-filter_complex',
+            video_out = Path(Path(video_left).parent, Path(video_left).stem + '_comp_h.mp4')
+        else:
+            video_out = Path(video_dir, video_out)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run(['ffmpeg', '-i', str(Path(video_left)), '-i',
+                str(Path(video_right)), '-filter_complex',
                 'hstack=inputs=2', '-y',
-                str(Path(cls.video_dir, video_out))], check=True)
+                str(Path(video_out))], check=True)
 
     @classmethod
-    def stack_v(cls, video_top, video_bottom, video_out=None):
+    def stack_v(cls, video_top='obama2s/obama2s_painted_t.mp4',
+                video_bottom='identity_removed/obama2s.ir_painted_t.mp4',
+                video_dir='../replic/samples',
+                video_out='../anim_out/obama2s.comp_v.mp4'):
         """ stack videos vertically """
+        if video_dir is None:
+            video_dir = cls.video_dir
+        video_top = Path(video_dir, video_top)
+        video_bottom = Path(video_dir, video_bottom)
         if video_out is None:
-            video_out = Path(Path(video_top).stem + '_v.mp4')
-        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', Path(cls.video_dir, video_top), '-i',
-                Path(cls.video_dir, video_bottom), '-filter_complex',
+            video_out = Path(Path(video_top).parent, Path(video_top).stem + '_comp_v.mp4')
+        else:
+            video_out = Path(video_dir, video_out)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run(['ffmpeg', '-i', str(Path(video_top)), '-i',
+                str(Path(video_bottom)), '-filter_complex',
                 'vstack=inputs=2', '-y',
-                Path(cls.video_dir, video_out)], check=True)
+                str(Path(video_out))], check=True)
 
     @classmethod
-    def draw_text(cls, video_in='obama2s_painted_.mp4', video_out=None,
+    def draw_text(cls, video_in='obama2s/obama2s_painted_.mp4',
+                  video_dir='../replic/samples',
+                  video_out='../anim_out/obama2s_painted_t.mp4',
                   frame_text='frame %{frame_num} %{pts}'):
         """ add text to video frames """
+        if video_dir is None:
+            video_dir = cls.video_dir
+        video_in = Path(video_dir, video_in)
         if video_out is None:
-            video_out = Path(Path(video_in).parent, Path(
-                Path(video_in).stem + 't.mp4'))
-        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+            video_out = Path(Path(video_in).parent, Path(video_in).stem + 't.mp4')
+        else:
+            video_out = Path(video_dir, video_out)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
         sp.run(['ffmpeg', '-y', '-i', str(Path(cls.video_dir, video_in)), '-vf',
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
                 str(Path(cls.video_dir, video_out))], check=True)
 
     @classmethod
     def prepare_ground_truth(cls, video_in='080815_WeeklyAddress.mp4',
-                             video_out=None,
+                             video_dir='../replic/samples',
+                             video_out='../video/obama2s_painted_t.mp4',
                              frame_text='frame %{frame_num} %{pts}'):
         """ adjust the framerate to 25fps, crop and add text to the source video """
+        if video_dir is None:
+            video_dir = cls.video_dir
+        video_in = Path(video_dir, video_in)
         if video_out is None:
-            video_out = Path(Path(video_in).parent, Path(
-                Path(video_in).stem + '_25t.mp4'))
-        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+            video_out = Path(Path(video_in).parent, Path(video_in).stem + '_25t.mp4')
+        else:
+            video_out = Path(video_dir, video_out)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
         sp.run(['ffmpeg', '-y', '-i', str(Path(cls.video_dir, 'temp.mp4')), '-vf',
                 'fps=25, drawtext=text=\'' + frame_text + '\':fontsize=20'
                 ':x=810:y=260,crop=500:500:800:250',
@@ -479,12 +486,19 @@ class Video:
 
     @classmethod
     def prepare_anims(cls, video_in='080815_WeeklyAddress_painted_.mp4',
-                      video_out=None, frame_text='frame %{frame_num} %{pts}'):
+                      video_dir='../replic/samples',
+                      video_out='../anim_out/080815_WeeklyAddress_painted_t.mp4',
+                      frame_text='frame %{frame_num} %{pts}'):
         """ scale down, crop and add text to the animations """
+        if video_dir is None:
+            video_dir = cls.video_dir
+        video_in = Path(video_dir, video_in)
         if video_out is None:
-            video_out = Path(Path(video_in).parent, Path(
-                Path(video_in).stem + 't.mp4'))
-        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+            video_out = Path(Path(video_in).parent, Path(video_in).stem + 't.mp4')
+        else:
+            video_out = Path(video_dir, video_out)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
         sp.run(['ffmpeg', '-y', '-i', str(Path(cls.video_dir, video_in)), '-vf',
                 'scale=500:500,drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
                 str(Path(cls.video_dir, video_out))], check=True)
