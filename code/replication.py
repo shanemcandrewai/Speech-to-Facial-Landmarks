@@ -19,7 +19,7 @@ class Frames:
 
     @classmethod
     def init_frames_dir(cls, frames_dir=None):
-        """ Set and create the frame directory is neccessary """
+        """ Set and create the frame directory if neccessary """
         if frames_dir is None:
             cls.frames_dir = Path('..', 'replic', 'frames')
         else:
@@ -54,8 +54,12 @@ class DlibProcess:
     shape = None
     detector = None
     predictor = None
+    frames = None
+    lmarks = np.empty((0, 68, 2))
+    lmarks_file = None
 
-    def init(self, model_dir=None,
+    @classmethod
+    def init(cls, model_dir=None, frames=None, lmarks_file=None,
              model_url='https://raw.github.com/davisking/dlib-models/master/'
                        'shape_predictor_68_face_landmarks.dat.bz2'):
         """ initialize DLib, download model if neccessary """
@@ -63,87 +67,94 @@ class DlibProcess:
             model_file = Path(Path('..', 'data'), Path(model_url).stem)
         else:
             model_file = Path(model_dir, Path(model_url).stem)
+
+        if frames is None:
+            cls.frames = Frames
+        else:
+            cls.frames = frames
+
+        if lmarks_file is None:
+            cls.lmarks_file = Path('..', 'replic', 'data', 'lmarks.npy')
+        else:
+            cls.lmarks_file = Path(lmarks_file)
+        cls.lmarks_file.parent.mkdir(parents=True, exist_ok=True)
+
         if not model_file.is_file():
             print('Model ' + str(model_file) + ' not found')
             print('Downloading from ' + model_url)
             with urllib.request.urlopen(model_url) as response, open(
                     model_file, 'wb') as model:
                 model.write(bz2.decompress(response.read()))
-        self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor(str(model_file))
+        cls.detector = dlib.get_frontal_face_detector()
+        cls.predictor = dlib.shape_predictor(str(model_file))
 
-    def get_lmarks(self, frame_num=30, frames=None, face_num=0):
+    @classmethod
+    def get_lmarks(cls, frame_num=30, face_num=0):
         """ load image and attempt to extract faces """
-        if frame_num != self.frame_num or self.shape is None:
-            if frames is None:
-                image_file_path = Frames.get_file_path(frame_num)
-            else:
-                image_file_path = frames.get_file_path(frame_num)
-            if self.predictor is None:
-                self.init()
-            self.rgb_image = dlib.load_rgb_image(str(image_file_path))
-            if self.rgb_image is not None:
+        if frame_num != cls.frame_num or cls.shape is None:
+            if cls.predictor is None:
+                cls.init()
+            image_file_path = cls.frames.get_file_path(frame_num)
+            cls.rgb_image = dlib.load_rgb_image(str(image_file_path))
+            if cls.rgb_image is not None:
                 print('Frame ', frame_num, ' extracting faces')
-                faces = self.detector(self.rgb_image, 1)
+                faces = cls.detector(cls.rgb_image, 1)
                 if len(faces) > 0:
                     print('Frame ', frame_num, ' face ', face_num, ' extracting landmarks')
-                    self.frame_num = frame_num
-                    self.shape = self.predictor(self.rgb_image, faces[face_num])
-        if self.shape is None:
+                    cls.frame_num = frame_num
+                    cls.shape = cls.predictor(cls.rgb_image, faces[face_num])
+        if cls.shape is None:
             return np.full((1, 68, 2), np.nan)
-        return np.array([(part.x, part.y) for part in self.shape.parts()]).reshape((1, 68, 2))
+        return np.array([(part.x, part.y) for part in cls.shape.parts()]).reshape((1, 68, 2))
 
-    def display_overlay(self, frame_num=30, frames=None, face_num=0):
+    @classmethod
+    def get_all_lmarks(cls, new_extract=False, video=None):
+        """ Get landmarks from face for all frames as ndarray """
+        if cls.lmarks_file is None:
+            cls.init()
+        if not new_extract and cls.lmarks_file.is_file():
+            cls.lmarks = np.load(cls.lmarks_file)
+            return cls.lmarks
+        if not cls.frames.get_frame_nums():
+            if video is None:
+                Video.extract_frames()
+            else:
+                video.extract_frames()
+        for frame_num in cls.frames.get_frame_nums():
+            cls.lmarks = np.concatenate([cls.lmarks, cls.get_lmarks(frame_num)])
+        np.save(cls.lmarks_file, cls.lmarks)
+        return cls.lmarks
+
+    @classmethod
+    def display_overlay(cls, frame_num=30, face_num=0):
         """ Display image overlayed with landmarks """
         win = dlib.image_window()
         win.clear_overlay()
-        self.get_lmarks(frame_num, frames, face_num)
-        win.set_image(self.rgb_image)
-        if self.shape is not None:
-            win.add_overlay(self.shape)
+        cls.get_lmarks(frame_num, face_num)
+        win.set_image(cls.rgb_image)
+        if cls.shape is not None:
+            win.add_overlay(cls.shape)
         dlib.hit_enter_to_continue()
 
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
-    def __init__(self, data_dir=None, extract_file=None, frames=None):
-        if data_dir is None:
-            self.data_dir = Path('..', 'replic', 'data')
-        else:
-            self.data_dir = Path(data_dir)
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        if extract_file is None:
-            self.extract_file = 'obama2s.npy'
-        else:
-            self.extract_file = Path(extract_file)
-        if frames is None:
-            self.frames = Frames()
-        else:
-            self.frames = frames
-        self.axes = None
-        self.all_lmarks = np.empty((0, 68, 2))
+    dlib_process = None
 
-    def get_all_lmarks(self, new_extract=False, dlib_proc=None):
-        """ Get landmarks from face for all frames as ndarray """
-        if dlib_proc is None:
-            dlib_proc = DlibProcess()
-        extract = Path(self.data_dir, self.extract_file)
-        if new_extract:
-            self.all_lmarks = None
-        elif extract.is_file():
-            self.all_lmarks = np.load(extract)
-        if self.all_lmarks.size == 0:
-            if not self.frames.get_frame_nums():
-                Video().extract_frames(self.extract_file.with_suffix('.mp4'))
-            for frame_num in self.frames.get_frame_nums():
-                self.all_lmarks = np.concatenate([self.all_lmarks,
-                                                  dlib_proc.get_lmarks(frame_num)])
-            np.save(extract, self.all_lmarks)
-        return self.all_lmarks
+    @classmethod
+    def init(cls, dlib_process=None):
+        """ Initilize DlibProcess """
+        if dlib_process is None:
+            cls.dlib_process = DlibProcess
+        else:
+            cls.dlib_process = dlib_process
 
-    def get_procrustes(self, lmarks=None, lips_only=False):
+    @classmethod
+    def get_procrustes(cls, lmarks=None, lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
         if lmarks is None:
-            lmarks = self.get_all_lmarks()
+            if cls.dlib_process is None:
+                cls.init()
+            lmarks = cls.dlib_process.get_all_lmarks()
         if lips_only:
             lmarks = lmarks[:, 48:, :]
         mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
@@ -158,11 +169,12 @@ class DataProcess:
             proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
         return proc_lmarks
 
-    def interpolate_lmarks(self, lmarks=None, old_rate=30, new_rate=25):
+    @classmethod
+    def interpolate_lmarks(cls, lmarks=None, old_rate=30, new_rate=25):
         """ Change the frame rate of the extracted landmarks using linear
             interpolation """
         if lmarks is None:
-            lmarks = self.get_procrustes()
+            lmarks = cls.get_procrustes()
         old_frame_axis = np.arange(lmarks.shape[0])
         new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(
             lmarks.shape[0]*new_rate/old_rate))
@@ -173,11 +185,12 @@ class DataProcess:
                                                     lmarks[:, ax1, ax2])
         return new_lmarks
 
-    def get_closed_mouth_frame(self, lmarks=None, zscore=1.3):
+    @classmethod
+    def get_closed_mouth_frame(cls, lmarks=None, zscore=1.3):
         """ Determine frame with the minimum distance between the inner lips
             excluding frames where the mouth is unusually wide or narrow """
         if lmarks is None:
-            lmarks = self.get_procrustes()
+            lmarks = cls.get_procrustes()
         lip_r = 60
         lip_l = 64
         mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
@@ -191,20 +204,21 @@ class DataProcess:
             lmarks_filtered, lip_bottom], axis=2)
         return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
-    def remove_identity(self, lmarks=None, template=None, file_out=None,
+    @classmethod
+    def remove_identity(cls, lmarks=None, template=None, id_removed_file=None,
                         zscore=0.1):
         """ current frame - the closed mouth frame + template """
         if lmarks is None:
-            lmarks = self.get_procrustes()
+            lmarks = cls.get_procrustes()
         if template is None:
             template = Path('..', 'data', 'mean.npy')
-        lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
-        closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
+        lmarks = cls.interpolate_lmarks().reshape((-1, 68, 2))
+        closed_mouth = lmarks[cls.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
         template_2d = np.load(str(template))[:, :2]
         identity_removed = lmarks - closed_mouth + template_2d
-        if file_out is not None:
-            Path(self.data_dir, file_out).parent.mkdir(parents=True, exist_ok=True)
-            np.save(Path(self.data_dir, file_out), identity_removed)
+        if id_removed_file is not None:
+            Path(id_removed_file).parent.mkdir(parents=True, exist_ok=True)
+            np.save(str(Path(id_removed_file)), identity_removed)
         return identity_removed
 
 class Draw:
@@ -223,7 +237,7 @@ class Draw:
             self.dimensions = {'width': 500, 'height': 500}
         else:
             self.dimensions = dimensions
-        lmarks = self.data_proc.get_all_lmarks()
+        lmarks = DlibProcess.get_all_lmarks()
         self.axes = None
         self.bounds = {'mid': np.nanmean(lmarks, 0),
                        'xmid': np.nanmean(lmarks[..., 0]),
@@ -360,106 +374,120 @@ class Draw:
 
 class Video:
     """ FFmpeg video processing manager """
-    def __init__(self, video_dir=None, audio_dir=None, frames=None):
-        if video_dir is None:
-            self.video_dir = Path('..', 'replic', 'video')
-        else:
-            self.video_dir = Path(video_dir)
-        if audio_dir is None:
-            self.audio_dir = Path('..', 'replic', 'audio')
-        else:
-            self.audio_dir = Path(audio_dir)
-        if frames is None:
-            self.frames = Frames()
-        else:
-            self.frames = frames
+    video_dir = None
+    audio_dir = None
+    frames = None
 
-    def extract_audio(self, video_in='obama2s.mp4',
+    @classmethod
+    def init(cls, video_dir=None, audio_dir=None, frames=None):
+        """ Set up default directories """
+        if video_dir is None:
+            cls.video_dir = Path('..', 'replic', 'video')
+        else:
+            cls.video_dir = Path(video_dir)
+        if audio_dir is None:
+            cls.audio_dir = Path('..', 'replic', 'audio')
+        else:
+            cls.audio_dir = Path(audio_dir)
+        if frames is None:
+            cls.frames = Frames()
+        else:
+            cls.frames = frames
+
+    @classmethod
+    def extract_audio(cls, video_in='obama2s.mp4',
                       audio_out=None):
         """ Extract audio from video sample """
         if audio_out is None:
-            audio_out = Path(self.audio_dir, Path(video_in).with_suffix('.wav'))
-        Path(self.audio_dir).mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)), '-y',
+            audio_out = Path(cls.audio_dir, Path(video_in).with_suffix('.wav'))
+        Path(cls.audio_dir).mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-i', str(Path(cls.video_dir, video_in)), '-y',
                 str(audio_out)], check=True)
 
-    def extract_frames(self, video_in='obama2s.mp4', start_number=0, quality=5):
+    @classmethod
+    def extract_frames(cls, video_in='obama2s.mp4', start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
-        frame_dir = Path(self.frames.frames_dir)
+        frame_dir = Path(cls.frames.frames_dir)
         if frame_dir.is_dir():
             shutil.rmtree(frame_dir)
         frame_dir.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_in)),
+        sp.run(['ffmpeg', '-i', str(Path(cls.video_dir, video_in)),
                 '-start_number', str(start_number), '-qscale:v', str(quality),
                 str(Path(frame_dir, r'%0' + str(
-                    self.frames.num_len) + 'd' + self.frames.suffix))], check=True)
+                    cls.frames.num_len) + 'd' + cls.frames.suffix))], check=True)
 
-    def create_video(self, video_out='plots.mp4', plots_dir=None, framerate=25,
+    @classmethod
+    def create_video(cls, video_out='plots.mp4', plots_dir=None, framerate=25,
                      frame_text='frame %{frame_num} %{pts}'):
         """ create video from images """
-        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
         if plots_dir is None:
             plots_dir = Path('..', 'replic', 'plots')
         sp.run(['ffmpeg', '-y', '-f', 'image2', '-framerate', str(framerate), '-i',
-                str(Path(plots_dir, r'%0' + str(self.frames.num_len) + 'd.png')), '-vf',
+                str(Path(plots_dir, r'%0' + str(cls.frames.num_len) + 'd.png')), '-vf',
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
-                str(Path(self.video_dir, video_out))], check=True)
+                str(Path(cls.video_dir, video_out))], check=True)
 
-    def stack_h(self, video_left='obama2s/obama2s_painted_t.mp4',
+    @classmethod
+    def stack_h(cls, video_left='obama2s/obama2s_painted_t.mp4',
                 video_right='identity_removed/obama2s.ir_painted_t.mp4',
                 video_out=None):
         """ stack videos horizontally """
         if video_out is None:
             video_out = Path(Path(video_left).stem + '_compare.mp4')
-        sp.run(['ffmpeg', '-i', str(Path(self.video_dir, video_left)), '-i',
-                str(Path(self.video_dir, video_right)), '-filter_complex',
+        sp.run(['ffmpeg', '-i', str(Path(cls.video_dir, video_left)), '-i',
+                str(Path(cls.video_dir, video_right)), '-filter_complex',
                 'hstack=inputs=2', '-y',
-                str(Path(self.video_dir, video_out))], check=True)
+                str(Path(cls.video_dir, video_out))], check=True)
 
-    def stack_v(self, video_top, video_bottom, video_out=None):
+    @classmethod
+    def stack_v(cls, video_top, video_bottom, video_out=None):
         """ stack videos vertically """
         if video_out is None:
             video_out = Path(Path(video_top).stem + '_v.mp4')
-        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-i', Path(self.video_dir, video_top), '-i',
-                Path(self.video_dir, video_bottom), '-filter_complex',
+        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-i', Path(cls.video_dir, video_top), '-i',
+                Path(cls.video_dir, video_bottom), '-filter_complex',
                 'vstack=inputs=2', '-y',
-                Path(self.video_dir, video_out)], check=True)
+                Path(cls.video_dir, video_out)], check=True)
 
-    def draw_text(self, video_in='obama2s_painted_.mp4', video_out=None,
+    @classmethod
+    def draw_text(cls, video_in='obama2s_painted_.mp4', video_out=None,
                   frame_text='frame %{frame_num} %{pts}'):
         """ add text to video frames """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + 't.mp4'))
-        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
+        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(cls.video_dir, video_in)), '-vf',
                 'drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
-                str(Path(self.video_dir, video_out))], check=True)
+                str(Path(cls.video_dir, video_out))], check=True)
 
-    def prepare_ground_truth(self, video_in='080815_WeeklyAddress.mp4',
+    @classmethod
+    def prepare_ground_truth(cls, video_in='080815_WeeklyAddress.mp4',
                              video_out=None,
                              frame_text='frame %{frame_num} %{pts}'):
         """ adjust the framerate to 25fps, crop and add text to the source video """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + '_25t.mp4'))
-        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, 'temp.mp4')), '-vf',
+        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(cls.video_dir, 'temp.mp4')), '-vf',
                 'fps=25, drawtext=text=\'' + frame_text + '\':fontsize=20'
                 ':x=810:y=260,crop=500:500:800:250',
-                str(Path(self.video_dir, video_out))], check=True)
+                str(Path(cls.video_dir, video_out))], check=True)
 
-    def prepare_anims(self, video_in='080815_WeeklyAddress_painted_.mp4',
+    @classmethod
+    def prepare_anims(cls, video_in='080815_WeeklyAddress_painted_.mp4',
                       video_out=None, frame_text='frame %{frame_num} %{pts}'):
         """ scale down, crop and add text to the animations """
         if video_out is None:
             video_out = Path(Path(video_in).parent, Path(
                 Path(video_in).stem + 't.mp4'))
-        Path(self.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
-        sp.run(['ffmpeg', '-y', '-i', str(Path(self.video_dir, video_in)), '-vf',
+        Path(cls.video_dir, video_out).parent.mkdir(parents=True, exist_ok=True)
+        sp.run(['ffmpeg', '-y', '-i', str(Path(cls.video_dir, video_in)), '-vf',
                 'scale=500:500,drawtext=text=\'' + frame_text + '\':fontsize=20:x=10:y=10',
-                str(Path(self.video_dir, video_out))], check=True)
+                str(Path(cls.video_dir, video_out))], check=True)
 
 class Analysis:
     """ Data extraction and analysis """
@@ -482,4 +510,3 @@ class Analysis:
         sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
                 '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
         data_proc.remove_identity(file_out=Path(video_in).stem + 'po.npy')
-#    python -c "from replication import *; DataProcess('../replic/', 'samples/obama2s.npy').remove_identity(file_out = 'data/obama2s.ir.npy')"
