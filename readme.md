@@ -48,25 +48,25 @@ Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpe
 #### Example usage : extract_frames(video_in, start_number, quality)
 Extract frames from `replic/samples/obama2s.mp4` into `replic/frames/`
 
-    python -c "from replication import *; Video.extract_frames('../replic/samples/obama2s.mp4')"
+    python -c "from replication import *; Video().extract_frames('../replic/samples/obama2s.mp4')"
 #### Example usage : extract_audio(video_in, audio_out)
 Extract audio in WAV format from video `replic/samples/obama2s.mp4` to `replic/audio/obama2s.wav`
 
-    python -c "from replication import *; Video.extract_audio('../replic/samples/obama2s.mp4')"
+    python -c "from replication import *; Video().extract_audio('../replic/samples/obama2s.mp4')"
 #### Example usage : draw_text(video_in, video_out, frame_text)
 Add the frame number and timestamp to video `replic/identity_removed/obama2s.ir_painted_.mp4` and save as `replic/anim_out/obama2s.ir_painted_t.mp4`
 
-    python -c "from replication import *; Video.draw_text('../replic/samples/identity_removed/obama2s.ir_painted_.mp4', '../replic/anim_out/obama2s.ir_painted_t.mp4')"
+    python -c "from replication import *; Video().draw_text('../replic/samples/identity_removed/obama2s.ir_painted_.mp4', '../replic/anim_out/obama2s.ir_painted_t.mp4')"
 #### Example usage : stack_h(video_left, video_right, video_out)
 Stack input videos `replic/samples/obama2s/obama2s_painted_t.mp4` and `replic/samples/identity_removed/obama2s.ir_painted_t.mp4` horizontally and for easier visual comparision into `replic/anim_out/obama2s_comparison.mp4`
 
-    python -c "from replication import *; Video.stack_h('../replic/samples/obama2s/obama2s_painted_t.mp4', '../replic/samples/identity_removed/obama2s.ir_painted_t.mp4', '../replic/anim_out/obama2s_comp_h.mp4')"
+    python -c "from replication import *; Video().stack_h('../replic/samples/obama2s/obama2s_painted_t.mp4', '../replic/samples/identity_removed/obama2s.ir_painted_t.mp4', '../replic/anim_out/obama2s_comp_h.mp4')"
 ### class Frames(frames_dir, video, suffix, num_len):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
 #### Example usage : get_frame_nums()
 Get frame numbers from `replic/frames/`
 
-    python -c "from replication import *; print(Frames.get_frame_nums())"
+    python -c "from replication import *; print(Frames().get_frame_nums())"
 ### class DlibProcess(model_dir, model_url)
 Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
 #### Example usage : display_overlay(frame_num)
@@ -78,17 +78,17 @@ Calculations and supporting methods required for the replication of experiments
 #### Example usage : get_closed_mouth_frame(lmarks, zscore)
 First calculate the width of the lips in each frame and filter out outliers. From those remaining, select the one with the lowest distance between the upper and low lips.
 
-    python -c "from replication import *; print(DataProcess('../replic/data/', 'obama2s.npy').get_closed_mouth_frame())"
+    python -c "from replication import *; print(DataProcess(DlibProcess('../replic/samples/obama2s.npy')).get_closed_mouth_frame())"
 #### Example usage : remove_identity(lmarks, template, file_out)
 Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks `replic/samples/obama2s.npy`, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to `replic/data/obama2s.ir.npy`
 
-    python -c "from replication import *; DataProcess('../replic/', 'samples/obama2s.npy').remove_identity(file_out = 'data/obama2s.ir.npy')"
+    python -c "from replication import *; print(DataProcess(DlibProcess('../replic/samples/obama2s.npy')).remove_identity(id_removed_file = 'data/obama2s.ir.npy'))"
 ### class Draw(plots_dir, data_proc, dimensions):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage(dpi, annot, lips_only)
 Use procrustes analysis to align and normalise landmarks, plot and save them with annotations in `replic/plots/`
 
-    python -c "from replication import *; Draw('../replic/plots/', DataProcess('../replic/data/', 'obama2s.npy')).save_plots_proc(annot=True)"
+    python -c "from replication import *; Draw('../replic/plots/', DataProcess(DlibProcess('obama2s.npy'))).save_plots_proc(annot=True)"
 ## code/test_utils.py
 ### function readme_test
 Extract examples from this readme and execute them sequentially
