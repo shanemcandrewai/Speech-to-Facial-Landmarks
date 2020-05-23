@@ -88,7 +88,7 @@ Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matpl
 #### Example usage(dpi, annot, lips_only)
 Use procrustes analysis to align and normalise landmarks, plot and save them with annotations in `replic/plots/`
 
-    python -c "from replication import *; Draw('../replic/plots/', DataProcess(DlibProcess('obama2s.npy'))).save_plots_proc(annot=True)"
+    python -c "from replication import *; Draw('../replic/plots/', DataProcess(DlibProcess('../replic/samples/obama2s.npy'))).save_plots_proc(annot=True)"
 ## code/test_utils.py
 ### function readme_test
 Extract examples from this readme and execute them sequentially

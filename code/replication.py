@@ -51,8 +51,9 @@ class DlibProcess:
     frames = None
     lmarks = np.empty((0, 68, 2))
     lmarks_file = None
+    video_file = None
 
-    def __init__(self, lmarks_file=None, frames=None, model_dir=None,
+    def __init__(self, lmarks_file=None, frames=None, video_file=None,
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
                            'shape_predictor_68_face_landmarks.dat.bz2'):
         """ initialize DLib, download model if neccessary """
@@ -61,17 +62,19 @@ class DlibProcess:
         else:
             type(self).frames = frames
 
+        if video_file is None:
+            type(self).video_file = Path(self.frames.root_dir, 'samples', 'obama2s.npy')
+        else:
+            type(self).video_file = Path(video_file)
+
         if lmarks_file is None:
-            type(self).lmarks_file = Path(self.frames.root_dir, 'data', 'lmarks.npy')
+            type(self).lmarks_file = Path(self.frames.root_dir, 'data',
+                                          Path(self.video_file).with_suffix('.npy').name)
         else:
             type(self).lmarks_file = Path(lmarks_file)
         type(self).lmarks_file.parent.mkdir(parents=True, exist_ok=True)
 
-        if model_dir is None:
-            model_file = Path(Path('..', 'data'), Path(model_url).stem)
-        else:
-            model_file = Path(model_dir, Path(model_url).stem)
-
+        model_file = Path(Path('..', 'data'), Path(model_url).stem)
         if not model_file.is_file():
             print('Model ' + str(model_file) + ' not found')
             print('Downloading from ' + model_url)
@@ -102,16 +105,15 @@ class DlibProcess:
             return np.full((1, 68, 2), np.nan)
         return np.array([(part.x, part.y) for part in shape.parts()]).reshape((1, 68, 2))
 
-    def get_all_lmarks(self, new_extract=False, video=None):
+    def get_all_lmarks(self, new_extract=False, lmarks_file=None):
         """ Get landmarks from face for all frames as ndarray """
+        if lmarks_file is None:
+            lmarks_file = self.lmarks_file
         if not new_extract and self.lmarks_file.is_file():
             type(self).lmarks = np.load(self.lmarks_file)
             return self.lmarks
         if not self.frames.get_frame_nums():
-            if video is None:
-                Video(self.frames).extract_frames()
-            else:
-                video.extract_frames()
+            Video(self.frames).extract_frames(self.video_file)
         for frame_num in self.frames.get_frame_nums():
             type(self).lmarks = np.concatenate([self.lmarks, self.get_lmarks(frame_num)])
         np.save(self.lmarks_file, self.lmarks)
@@ -503,7 +505,7 @@ class Analysis:
             type(self).video = Video()
         else:
             type(self).video = video
-        type(self).root_dir = video.root_dir
+        type(self).root_dir = self.video.root_dir
         if data_proc is None:
             type(self).data_proc = DataProcess()
         else:
@@ -513,12 +515,12 @@ class Analysis:
         """ Save predicted landmarks from the pre-trained model tegether with
         extracted landmarks pre-processed and animated """
         if video_in is None:
-            video_in = Path(self.root_dir, 'samples', '080815_WeeklyAddress.mp4')
+            video_in = Path(self.root_dir, 'data', '080815_WeeklyAddress.mp4')
         if pred_out is None:
             pred_out = Path(self.root_dir, 'pred_out', Path(video_in).with_suffix('.npy').name)
         self.video.extract_audio(video_in)
         sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
                 '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
 
-        lmarks = self.data_proc.dlib_proc.get_lmarks(video=video_in)
+        lmarks = self.data_proc.dlib_proc(video_file=video_in).get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
