@@ -13,7 +13,8 @@ import dlib
 
 class Frames:
     """ Frame file manager """
-    frames_dir = Path('..', 'replic', 'frames')
+    root_dir = Path('..', 'replic')
+    frames_dir = Path(root_dir, 'frames')
     suffix = '.jpeg'
     num_len = 4
 
@@ -49,7 +50,7 @@ class DlibProcess:
     predictor = None
     frames = None
     lmarks = np.empty((0, 68, 2))
-    lmarks_file = Path('..', 'replic', 'data', 'lmarks.npy')
+    lmarks_file = None
 
     def __init__(self, lmarks_file=None, frames=None, model_dir=None,
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
@@ -60,7 +61,9 @@ class DlibProcess:
         else:
             type(self).frames = frames
 
-        if lmarks_file is not None:
+        if lmarks_file is None:
+            type(self).lmarks_file = Path(self.frames.root_dir, 'data', 'lmarks.npy')
+        else:
             type(self).lmarks_file = Path(lmarks_file)
         type(self).lmarks_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -203,22 +206,23 @@ class DataProcess:
 
 class Draw:
     """ Draw landmarks with matplotlib """
-    plots_dir = Path('..', 'replic', 'plots')
     data_proc = None
+    plots_dir = None
     frames = None
     dimensions = {'width': 500, 'height': 500}
     axes = None
     bounds = {}
 
     def __init__(self, plots_dir=None, data_proc=None, dimensions=None):
-        if plots_dir is not None:
-            type(self).plots_dir = Path(plots_dir)
-        type(self).plots_dir.mkdir(parents=True, exist_ok=True)
         if data_proc is None:
             type(self).data_proc = DataProcess()
         else:
             type(self).data_proc = data_proc
         type(self).frames = self.data_proc.dlib_proc.frames
+        if plots_dir is None:
+            type(self).plots_dir = Path(self.frames.root_dir, 'plots')
+        else:
+            type(self).plots_dir = Path(plots_dir)
         if dimensions is not None:
             type(self).dimensions = dimensions
 
@@ -364,14 +368,16 @@ class Draw:
 class Video:
     """ FFmpeg video processing manager """
     frames = None
-    root_dir = Path('..', 'replic')
+    root_dir = None
 
     def __init__(self, frames=None, root_dir=None):
         if frames is None:
             type(self).frames = Frames()
         else:
             type(self).frames = frames
-        if root_dir is not None:
+        if root_dir is None:
+            type(self).root_dir = self.frames.root_dir
+        else:
             type(self).root_dir = Path(root_dir)
 
     def extract_audio(self, video_in=None, audio_out=None):
@@ -489,21 +495,28 @@ class Video:
 class Analysis:
     """ Data extraction and analysis """
     video = None
-    def __init__(self, video=None):
+    data_proc = None
+    root_dir = None
+
+    def __init__(self, video=None, data_proc=None):
         if video is None:
             type(self).video = Video()
         else:
             type(self).video = video
+        type(self).root_dir = video.root_dir
+        if data_proc is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = data_proc
 
-    def video_to_lmarks(self, video_in='080815_WeeklyAddress.mp4', pred_out=None,
-                        data_proc=None):
+    def video_to_lmarks(self, video_in=None, pred_out=None):
         """ Save predicted landmarks from the pre-trained model tegether with
         extracted landmarks pre-processed and animated """
+        if video_in is None:
+            video_in = Path(self.root_dir, 'samples', '080815_WeeklyAddress.mp4')
         if pred_out is None:
-            pred_out = Path('..', 'replic', 'pred_out')
-#        if data_proc is None:
-#            data_proc = DataProcess(extract_file=Path(video_in).with_suffix('.npy'))
+            pred_out = Path(self.root_dir, 'pred_out', Path(video_in).with_suffix('.npy').name)
         self.video.extract_audio(video_in)
         sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
                 '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
-        data_proc.remove_identity(file_out=Path(video_in).stem + 'po.npy')
+#        self.data_proc.remove_identity(file_out=Path(video_in).stem + 'po.npy')

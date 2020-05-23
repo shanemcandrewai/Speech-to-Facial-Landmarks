@@ -82,7 +82,7 @@ First calculate the width of the lips in each frame and filter out outliers. Fro
 #### Example usage : remove_identity(lmarks, template, file_out)
 Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks `replic/samples/obama2s.npy`, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to `replic/data/obama2s.ir.npy`
 
-    python -c "from replication import *; print(DataProcess(DlibProcess('../replic/samples/obama2s.npy')).remove_identity(id_removed_file = 'data/obama2s.ir.npy'))"
+    python -c "from replication import *; print(DataProcess(DlibProcess('../replic/samples/obama2s.npy')).remove_identity(id_removed_file = '../replic/data/obama2s.ir.npy'))"
 ### class Draw(plots_dir, data_proc, dimensions):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### Example usage(dpi, annot, lips_only)
