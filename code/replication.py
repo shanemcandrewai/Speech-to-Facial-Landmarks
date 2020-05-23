@@ -519,4 +519,6 @@ class Analysis:
         self.video.extract_audio(video_in)
         sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
                 '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
-#        self.data_proc.remove_identity(file_out=Path(video_in).stem + 'po.npy')
+
+        lmarks = self.data_proc.dlib_proc.get_lmarks(video=video_in)
+        lmarks_ir = self.data_proc.remove_identity(lmarks)
