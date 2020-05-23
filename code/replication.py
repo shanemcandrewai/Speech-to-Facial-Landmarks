@@ -511,7 +511,7 @@ class Analysis:
         else:
             type(self).data_proc = data_proc
 
-    def video_to_lmarks(self, video_in=None, pred_out=None):
+    def calc_rmse(self, video_in=None, pred_out=None):
         """ Save predicted landmarks from the pre-trained model tegether with
         extracted landmarks pre-processed and animated """
         if video_in is None:
@@ -519,8 +519,10 @@ class Analysis:
         if pred_out is None:
             pred_out = Path(self.root_dir, 'pred_out', Path(video_in).with_suffix('.npy').name)
         self.video.extract_audio(video_in)
-        sp.run(['python', 'generate.py', '-i', self.video.audio_dir, '-m',
+        sp.run(['python', 'generate.py', '-i', str(Path(self.root_dir, 'audio')), '-m',
                 '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
-
+        pred_lmarks = np.load(pred_out)
         lmarks = self.data_proc.dlib_proc(video_file=video_in).get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
+        return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
+            (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5
