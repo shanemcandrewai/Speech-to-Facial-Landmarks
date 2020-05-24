@@ -48,7 +48,7 @@ Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpe
 Extract frames from `replic/shared/obama2s.mp4` into `replic/frames/`
 
     python -c "from replication import *; Video().extract_frames('../replic/shared/obama2s.mp4')"
-#### [method extract_audio](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Video.extract_audio) audio example usage :
+#### [method extract_audio](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Video.extract_audio) example usage :
 Extract audio in WAV format from video `replic/shared/obama2s.mp4` to `replic/audio/obama2s.wav`
 
     python -c "from replication import *; Video().extract_audio('../replic/shared/obama2s.mp4')"
@@ -66,9 +66,9 @@ Helper class used to manage a folder of frames extracted from source video. Each
 Get frame numbers from `replic/frames/`
 
     python -c "from replication import *; print(Frames().get_frame_nums())"
-### class DlibProcess(model_dir, model_url)
+### [class DlibProcess](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DlibProcess):
 Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
-#### [method display_overlay](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Frames.display_overlay) example usage :
+#### [method display_overlay](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DlibProcess.display_overlay) example usage :
 Extract landmarks from Frame 30 and overlay the frame image with corresponding line plots
 
     python -c "from replication import *; DlibProcess().display_overlay(frame_num=30)"
@@ -84,7 +84,7 @@ Following the specification described in the orginal paper, apply Procrustes ana
     python -c "from replication import *; print(DataProcess(DlibProcess('../replic/shared/obama2s.npy')).remove_identity(id_removed_file = '../replic/data/obama2s.ir.npy'))"
 ### [class Draw](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
-#### [method save_plots_proc](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw.save_plots_proc) example usage:
+#### [method save_plots_proc](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw.save_plots_proc) example usage :
 Use procrustes analysis to align and normalise landmarks, plot and save them with annotations in `replic/plots/`
 
     python -c "from replication import *; Draw('../replic/plots/', DataProcess(DlibProcess('../replic/shared/obama2s.npy'))).save_plots_proc(annot=True)"
