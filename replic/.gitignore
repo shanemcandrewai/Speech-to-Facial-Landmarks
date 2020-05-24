@@ -3,5 +3,5 @@
 
 # But not these files...
 !.gitignore
-!samples
-!samples/**
+!shared
+!shared/**
