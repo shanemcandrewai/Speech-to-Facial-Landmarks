@@ -19,7 +19,7 @@ In addition to the command-line options specified in [Noise-Resilient Training M
 * `-s --save_prediction` save the predicted landmarks and speech array in the folder specified by the `-o` option and disable generation of animation
 * `-l --load_prediction` load predictions from the folder specified by the `-i` option and generate a painted face animation in the folder specified by the `-o` option. This option expects the input folder to contain pairs of files with the same name but different extensions - `.wav` and `.npy`
 
-These enhancements were susequently merged into the [upstream repository](https://github.com/eeskimez/noise_resilient_3dtface/commit/59536f4ebe43bcabd0b2f90a93974552e87dc553)
+These enhancements were subsequently merged into the [upstream repository](https://github.com/eeskimez/noise_resilient_3dtface/commit/59536f4ebe43bcabd0b2f90a93974552e87dc553)
 
 #### Examples
 
@@ -48,43 +48,43 @@ Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpe
 Extract frames from `replic/shared/obama2s.mp4` into `replic/frames/`
 
     python -c "from replication import *; Video().extract_frames('../replic/shared/obama2s.mp4')"
-#### Example usage : extract_audio(video_in, audio_out)
+#### [method extract_audio](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Video.extract_audio) audio example usage :
 Extract audio in WAV format from video `replic/shared/obama2s.mp4` to `replic/audio/obama2s.wav`
 
     python -c "from replication import *; Video().extract_audio('../replic/shared/obama2s.mp4')"
-#### Example usage : draw_text(video_in, video_out, frame_text)
+#### [method draw_text](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Video.draw_text) example usage : 
 Add the frame number and timestamp to video `replic/identity_removed/obama2s.ir_painted_.mp4` and save as `replic/anim_out/obama2s.ir_painted_t.mp4`
 
     python -c "from replication import *; Video().draw_text('../replic/shared/identity_removed/obama2s.ir_painted_.mp4', '../replic/anim_out/obama2s.ir_painted_t.mp4')"
-#### Example usage : stack_h(video_left, video_right, video_out)
+#### [method stack_h](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Video.stack_h) example usage : 
 Stack input videos `replic/shared/obama2s/obama2s_painted_t.mp4` and `replic/shared/identity_removed/obama2s.ir_painted_t.mp4` horizontally and for easier visual comparision into `replic/anim_out/obama2s_comparison.mp4`
 
     python -c "from replication import *; Video().stack_h('../replic/shared/obama2s/obama2s_painted_t.mp4', '../replic/shared/identity_removed/obama2s.ir_painted_t.mp4', '../replic/anim_out/obama2s_comp_h.mp4')"
-### class Frames(frames_dir, video, suffix, num_len):
+### [class Frames](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Frames):
 Helper class used to manage a folder of frames extracted from source video. Each frame is jpeg file named according to the frame number.
-#### Example usage : get_frame_nums()
+#### [method get_frame_nums](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Frames.get_frame_nums) example usage :
 Get frame numbers from `replic/frames/`
 
     python -c "from replication import *; print(Frames().get_frame_nums())"
 ### class DlibProcess(model_dir, model_url)
 Manages the extraction of landmarks from individual frames using the [Dlib toolkit](http://dlib.net/)
-#### Example usage : display_overlay(frame_num)
+#### [method display_overlay](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Frames.display_overlay) example usage :
 Extract landmarks from Frame 30 and overlay the frame image with corresponding line plots
 
     python -c "from replication import *; DlibProcess().display_overlay(frame_num=30)"
-### class DataProcess(data_dir, extract_file, frames):
+### [class DataProcess](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DataProcess):
 Calculations and supporting methods required for the replication of experiments
-#### Example usage : get_closed_mouth_frame(lmarks, zscore)
+#### [method get_closed_mouth_frame](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DataProcess.get_closed_mouth_frame) example usage :
 First calculate the width of the lips in each frame and filter out outliers. From those remaining, select the one with the lowest distance between the upper and low lips.
 
     python -c "from replication import *; print(DataProcess(DlibProcess('../replic/shared/obama2s.npy')).get_closed_mouth_frame())"
-#### Example usage : remove_identity(lmarks, template, file_out)
+#### [method remove_identity](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DataProcess.remove_identity) example usage :
 Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks `replic/shared/obama2s.npy`, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to `replic/data/obama2s.ir.npy`
 
     python -c "from replication import *; print(DataProcess(DlibProcess('../replic/shared/obama2s.npy')).remove_identity(id_removed_file = '../replic/data/obama2s.ir.npy'))"
-### class Draw(plots_dir, data_proc, dimensions):
+### [class Draw](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
-#### Example usage(dpi, annot, lips_only)
+#### [method save_plots_proc](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw.save_plots_proc) example usage:
 Use procrustes analysis to align and normalise landmarks, plot and save them with annotations in `replic/plots/`
 
     python -c "from replication import *; Draw('../replic/plots/', DataProcess(DlibProcess('../replic/shared/obama2s.npy'))).save_plots_proc(annot=True)"
