@@ -14,12 +14,15 @@ import dlib
 class Frames:
     """ Frame file manager """
     root_dir = Path('..', 'replic')
+    """ Toolkit working directory """
     frames_dir = Path(root_dir, 'frames')
+    """ Location of frames extracted from video """
     suffix = '.jpeg'
+    """ Frame file extension """
     num_len = 4
+    """ Length of frame file sequence number """
 
     def __init__(self, frames_dir=None, suffix=None, num_len=None):
-        """ Update variable variables """
         if frames_dir is not None:
             type(self).frames_dir = Path(frames_dir)
         if suffix is not None:
@@ -44,16 +47,19 @@ class Frames:
 class DlibProcess:
     """ Dlib facial landmark extraction manager """
     rgb_image = None
+    """ http://dlib.net/python/index.html?highlight=rgb_imag#dlib.load_rgb_image """
     frame_num = None
+    """ Frame sequence number """
     shape = None
     detector = None
     predictor = None
     frames = None
+    """ [Frames](#replication.Frames) """
     lmarks = np.empty((0, 68, 2))
     lmarks_file = None
     video_file = None
 
-    def __init__(self, lmarks_file=None, frames=None, video_file=None,
+    def __init__(self, video_file=None, lmarks_file=None, frames=None,
                  model_url='https://raw.github.com/davisking/dlib-models/master/'
                            'shape_predictor_68_face_landmarks.dat.bz2'):
         """ initialize DLib, download model if neccessary """
@@ -63,7 +69,7 @@ class DlibProcess:
             type(self).frames = frames
 
         if video_file is None:
-            type(self).video_file = Path(self.frames.root_dir, 'samples', 'obama2s.npy')
+            type(self).video_file = Path(self.frames.root_dir, 'shared', 'obama2s.npy')
         else:
             type(self).video_file = Path(video_file)
 
@@ -132,12 +138,14 @@ class DlibProcess:
 class DataProcess:
     """ Calculations and supporting methods required for the replication of experiments """
     dlib_proc = None
+    video_file = None
 
-    def __init__(self, dlib_proc=None):
+    def __init__(self, video_file=None, dlib_proc=None):
         if dlib_proc is None:
-            type(self).dlib_proc = DlibProcess()
+            type(self).dlib_proc = DlibProcess(video_file)
         else:
             type(self).dlib_proc = dlib_proc
+        type(self).video_file = self.dlib_proc.video_file
 
     def get_procrustes(self, lmarks=None, lips_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
@@ -382,21 +390,21 @@ class Video:
         else:
             type(self).root_dir = Path(root_dir)
 
-    def extract_audio(self, video_in=None, audio_out=None):
+    def extract_audio(self, video_in=None, audio_file=None):
         """ Extract audio from video sample """
         if video_in is None:
-            video_in = Path(self.root_dir, 'samples', 'obama2s.mp4')
-        if audio_out is None:
-            audio_out = Path(self.root_dir, 'audio',
-                             Path(video_in).with_suffix('.wav').name)
-        Path(audio_out).parent.mkdir(parents=True, exist_ok=True)
+            video_in = Path(self.root_dir, 'shared', 'obama2s.mp4')
+        if audio_file is None:
+            audio_file = Path(self.root_dir, 'audio',
+                              Path(video_in).with_suffix('.wav').name)
+        Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
         sp.run(['ffmpeg', '-i', str(video_in), '-y',
-                str(audio_out)], check=True)
+                str(audio_file)], check=True)
 
     def extract_frames(self, video_in=None, start_number=0, quality=5):
         """ Extract frames from video using FFmpeg """
         if video_in is None:
-            video_in = Path(self.root_dir, 'samples', 'obama2s.mp4')
+            video_in = Path(self.root_dir, 'shared', 'obama2s.mp4')
         frames_dir = self.frames.frames_dir
         if frames_dir.is_dir():
             shutil.rmtree(frames_dir)
@@ -422,10 +430,10 @@ class Video:
     def stack_h(self, video_left=None, video_right=None, video_out=None):
         """ stack videos horizontally """
         if video_left is None:
-            video_left = Path(self.root_dir, 'samples',
+            video_left = Path(self.root_dir, 'shared',
                               'obama2s', 'obama2s_painted_t.mp4')
         if video_right is None:
-            video_right = Path(self.root_dir, 'samples', 'identity_removed',
+            video_right = Path(self.root_dir, 'shared', 'identity_removed',
                                'obama2s.ir_painted_t.mp4')
         if video_out is None:
             video_out = Path(self.root_dir, 'video',
@@ -440,10 +448,10 @@ class Video:
     def stack_v(self, video_top=None, video_bottom=None, video_out=None):
         """ stack videos vertically """
         if video_top is None:
-            video_top = Path(self.root_dir, 'samples',
+            video_top = Path(self.root_dir, 'shared',
                              'obama2s', 'obama2s_painted_t.mp4')
         if video_bottom is None:
-            video_bottom = Path(self.root_dir, 'samples', 'identity_removed',
+            video_bottom = Path(self.root_dir, 'shared', 'identity_removed',
                                 'obama2s.ir_painted_t.mp4')
         if video_out is None:
             video_out = Path(self.root_dir, 'video',
@@ -458,7 +466,7 @@ class Video:
     def draw_text(self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}'):
         """ add text to video frames """
         if video_in is None:
-            video_in = Path(self.root_dir, 'samples', 'obama2s.mp4')
+            video_in = Path(self.root_dir, 'shared', 'obama2s.mp4')
         if video_out is None:
             video_out = Path(self.root_dir, 'video', Path(Path(video_in).name + 't.mp4'))
         Path(video_out).parent.mkdir(parents=True, exist_ok=True)
@@ -471,7 +479,7 @@ class Video:
                              frame_text='frame %{frame_num} %{pts}'):
         """ adjust the framerate to 25fps, crop and add text to the source video """
         if video_in is None:
-            video_in = Path(self.root_dir, 'samples', '080815_WeeklyAddress.mp4')
+            video_in = Path(self.root_dir, 'shared', '080815_WeeklyAddress.mp4')
         if video_out is None:
             video_out = Path(self.root_dir, 'video',
                              Path(Path(video_in).name + '_25t.mp4'))
@@ -496,33 +504,35 @@ class Video:
 
 class Analysis:
     """ Data extraction and analysis """
-    video = None
     data_proc = None
+    video = None
     root_dir = None
 
-    def __init__(self, video=None, data_proc=None):
+    def __init__(self, data_proc=None, video=None):
+        if data_proc is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = data_proc
         if video is None:
             type(self).video = Video()
         else:
             type(self).video = video
         type(self).root_dir = self.video.root_dir
-        if data_proc is None:
-            type(self).data_proc = DataProcess()
-        else:
-            type(self).data_proc = data_proc
 
-    def calc_rmse(self, video_in=None, pred_out=None):
+    def calc_rmse(self, pred_out=None, audio_file=None):
         """ Save predicted landmarks from the pre-trained model tegether with
         extracted landmarks pre-processed and animated """
-        if video_in is None:
-            video_in = Path(self.root_dir, 'data', '080815_WeeklyAddress.mp4')
         if pred_out is None:
-            pred_out = Path(self.root_dir, 'pred_out', Path(video_in).with_suffix('.npy').name)
-        self.video.extract_audio(video_in)
+            pred_out = Path(self.root_dir, 'pred_out')
+        if audio_file is None:
+            audio_file = Path(self.root_dir, 'audio',
+                              Path(self.data_proc.dlib_proc.video_file).with_suffix('.wav').name)
+        video_file = self.data_proc.dlib_proc.video_file
+        self.video.extract_audio(video_file, audio_file)
         sp.run(['python', 'generate.py', '-i', str(Path(self.root_dir, 'audio')), '-m',
                 '../pre_trained/1D_CNN.pt', '-o', str(pred_out), '-s'], check=True)
-        pred_lmarks = np.load(pred_out)
-        lmarks = self.data_proc.dlib_proc(video_file=video_in).get_all_lmarks()
+        pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, 'predicted.npy'))
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
         return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
             (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5

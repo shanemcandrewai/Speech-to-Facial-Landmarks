@@ -1,0 +1,2035 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>replication API documentation</title>
+<meta name="description" content="Replication toolkit" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>replication</code></h1>
+</header>
+<section id="section-intro">
+<p>Replication toolkit</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34; Replication toolkit &#34;&#34;&#34;
+from pathlib import Path
+import shutil
+import urllib.request
+import bz2
+import subprocess as sp
+import warnings
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.spatial import procrustes
+from scipy import stats
+import dlib
+
+class Frames:
+    &#34;&#34;&#34; Frame file manager &#34;&#34;&#34;
+    root_dir = Path(&#39;..&#39;, &#39;replic&#39;)
+    &#34;&#34;&#34; Toolkit working directory &#34;&#34;&#34;
+    frames_dir = Path(root_dir, &#39;frames&#39;)
+    &#34;&#34;&#34; Location of frames extracted from video &#34;&#34;&#34;
+    suffix = &#39;.jpeg&#39;
+    &#34;&#34;&#34; Frame file extension &#34;&#34;&#34;
+    num_len = 4
+    &#34;&#34;&#34; Length of frame file sequence number &#34;&#34;&#34;
+
+    def __init__(self, frames_dir=None, suffix=None, num_len=None):
+        if frames_dir is not None:
+            type(self).frames_dir = Path(frames_dir)
+        if suffix is not None:
+            type(self).suffix = suffix
+        if num_len is not None:
+            type(self).num_len = num_len
+
+    def get_file_path(self, frame_num=30):
+        &#34;&#34;&#34; Build file path from frame number &#34;&#34;&#34;
+        return str(Path(self.frames_dir, str(frame_num).zfill(
+            self.num_len)).with_suffix(self.suffix))
+
+    def get_frame_file_names(self):
+        &#34;&#34;&#34; Get list of frame files &#34;&#34;&#34;
+        return sorted(self.frames_dir.glob(&#39;*&#39; + self.suffix))
+
+    def get_frame_nums(self):
+        &#34;&#34;&#34; Get list of frame numbers &#34;&#34;&#34;
+        frames = self.get_frame_file_names()
+        return [int(Path(frame).stem) for frame in frames]
+
+class DlibProcess:
+    &#34;&#34;&#34; Dlib facial landmark extraction manager &#34;&#34;&#34;
+    rgb_image = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=rgb_imag#dlib.load_rgb_image &#34;&#34;&#34;
+    frame_num = None
+    &#34;&#34;&#34; Frame sequence number &#34;&#34;&#34;
+    shape = None
+    detector = None
+    predictor = None
+    frames = None
+    &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
+    lmarks = np.empty((0, 68, 2))
+    lmarks_file = None
+    video_file = None
+
+    def __init__(self, video_file=None, lmarks_file=None, frames=None,
+                 model_url=&#39;https://raw.github.com/davisking/dlib-models/master/&#39;
+                           &#39;shape_predictor_68_face_landmarks.dat.bz2&#39;):
+        &#34;&#34;&#34; initialize DLib, download model if neccessary &#34;&#34;&#34;
+        if frames is None:
+            type(self).frames = Frames()
+        else:
+            type(self).frames = frames
+
+        if video_file is None:
+            type(self).video_file = Path(self.frames.root_dir, &#39;shared&#39;, &#39;obama2s.npy&#39;)
+        else:
+            type(self).video_file = Path(video_file)
+
+        if lmarks_file is None:
+            type(self).lmarks_file = Path(self.frames.root_dir, &#39;data&#39;,
+                                          Path(self.video_file).with_suffix(&#39;.npy&#39;).name)
+        else:
+            type(self).lmarks_file = Path(lmarks_file)
+        type(self).lmarks_file.parent.mkdir(parents=True, exist_ok=True)
+
+        model_file = Path(Path(&#39;..&#39;, &#39;data&#39;), Path(model_url).stem)
+        if not model_file.is_file():
+            print(&#39;Model &#39; + str(model_file) + &#39; not found&#39;)
+            print(&#39;Downloading from &#39; + model_url)
+            with urllib.request.urlopen(model_url) as response, open(
+                    model_file, &#39;wb&#39;) as model:
+                model.write(bz2.decompress(response.read()))
+        type(self).detector = dlib.get_frontal_face_detector()
+        type(self).predictor = dlib.shape_predictor(str(model_file))
+
+    def get_shape(self, frame_num=30, face_num=0):
+        &#34;&#34;&#34; load image and attempt to extract shape predictor &#34;&#34;&#34;
+        if frame_num != self.frame_num or self.shape is None:
+            image_file_path = self.frames.get_file_path(frame_num)
+            type(self).rgb_image = dlib.load_rgb_image(str(image_file_path))
+            if self.rgb_image is not None:
+                print(&#39;Frame &#39;, frame_num, &#39; extracting faces&#39;)
+                faces = self.detector(self.rgb_image, 1)
+                if len(faces) &gt; 0:
+                    print(&#39;Frame &#39;, frame_num, &#39; face &#39;, face_num, &#39; extracting landmarks&#39;)
+                    type(self).frame_num = frame_num
+                    type(self).shape = self.predictor(self.rgb_image, faces[face_num])
+        return self.shape
+
+    def get_lmarks(self, frame_num=30, face_num=0):
+        &#34;&#34;&#34; load image and attempt to extract landmark &#34;&#34;&#34;
+        shape = self.get_shape(frame_num, face_num)
+        if shape is None:
+            return np.full((1, 68, 2), np.nan)
+        return np.array([(part.x, part.y) for part in shape.parts()]).reshape((1, 68, 2))
+
+    def get_all_lmarks(self, new_extract=False, lmarks_file=None):
+        &#34;&#34;&#34; Get landmarks from face for all frames as ndarray &#34;&#34;&#34;
+        if lmarks_file is None:
+            lmarks_file = self.lmarks_file
+        if not new_extract and self.lmarks_file.is_file():
+            type(self).lmarks = np.load(self.lmarks_file)
+            return self.lmarks
+        if not self.frames.get_frame_nums():
+            Video(self.frames).extract_frames(self.video_file)
+        for frame_num in self.frames.get_frame_nums():
+            type(self).lmarks = np.concatenate([self.lmarks, self.get_lmarks(frame_num)])
+        np.save(self.lmarks_file, self.lmarks)
+        return self.lmarks
+
+    def display_overlay(self, frame_num=30, face_num=0):
+        &#34;&#34;&#34; Display image overlayed with landmarks &#34;&#34;&#34;
+        win = dlib.image_window()
+        win.clear_overlay()
+        self.get_lmarks(frame_num, face_num)
+        win.set_image(self.rgb_image)
+        if self.shape is not None:
+            win.add_overlay(self.shape)
+        dlib.hit_enter_to_continue()
+
+class DataProcess:
+    &#34;&#34;&#34; Calculations and supporting methods required for the replication of experiments &#34;&#34;&#34;
+    dlib_proc = None
+    video_file = None
+
+    def __init__(self, video_file=None, dlib_proc=None):
+        if dlib_proc is None:
+            type(self).dlib_proc = DlibProcess(video_file)
+        else:
+            type(self).dlib_proc = dlib_proc
+        type(self).video_file = self.dlib_proc.video_file
+
+    def get_procrustes(self, lmarks=None, lips_only=False):
+        &#34;&#34;&#34; Procrustes analysis - return landmarks best fit to mean landmarks &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.dlib_proc.get_all_lmarks()
+        if lips_only:
+            lmarks = lmarks[:, 48:, :]
+        mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
+        proc_lmarks = np.full(lmarks.shape, np.nan)
+        for frame_num in range(lmarks.shape[0]):
+            if ~np.isnan(lmarks[frame_num, 0, 0]):
+                _, proc_lmarks[frame_num], _ = procrustes(
+                    mean_lmarks[0], lmarks[frame_num])
+        if lips_only:
+            not_lips = np.full((proc_lmarks.shape[0], proc_lmarks.shape[1],
+                                48, proc_lmarks.shape[3]), np.nan)
+            proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
+        return proc_lmarks
+
+    def interpolate_lmarks(self, lmarks=None, old_rate=30, new_rate=25):
+        &#34;&#34;&#34; Change the frame rate of the extracted landmarks using linear
+            interpolation &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.get_procrustes()
+        old_frame_axis = np.arange(lmarks.shape[0])
+        new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(
+            lmarks.shape[0]*new_rate/old_rate))
+        new_lmarks = np.zeros((len(new_frame_axis),) + (lmarks.shape[1:]))
+        for ax1 in range(lmarks.shape[1]):
+            for ax2 in range(lmarks.shape[2]):
+                new_lmarks[:, ax1, ax2] = np.interp(new_frame_axis, old_frame_axis,
+                                                    lmarks[:, ax1, ax2])
+        return new_lmarks
+
+    def get_closed_mouth_frame(self, lmarks=None, zscore=1.3):
+        &#34;&#34;&#34; Determine frame with the minimum distance between the inner lips
+            excluding frames where the mouth is unusually wide or narrow &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.get_procrustes()
+        lip_r = 60
+        lip_l = 64
+        mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter(&#39;ignore&#39;, category=RuntimeWarning)
+            lmarks_filtered = np.nonzero(np.abs(stats.zscore(
+                mouth_width, nan_policy=&#39;omit&#39;)) &lt; zscore)
+        lip_top = slice(61, 64)
+        lip_bottom = slice(65, 68)
+        lip_dist = np.linalg.norm(lmarks[lmarks_filtered, lip_top] - lmarks[
+            lmarks_filtered, lip_bottom], axis=2)
+        return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
+
+    def remove_identity(self, lmarks=None, template=None, id_removed_file=None,
+                        zscore=0.1):
+        &#34;&#34;&#34; current frame - the closed mouth frame + template &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.get_procrustes()
+        if template is None:
+            template = Path(&#39;..&#39;, &#39;data&#39;, &#39;mean.npy&#39;)
+        lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
+        closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
+        template_2d = np.load(str(template))[:, :2]
+        identity_removed = lmarks - closed_mouth + template_2d
+        if id_removed_file is not None:
+            Path(id_removed_file).parent.mkdir(parents=True, exist_ok=True)
+            np.save(str(Path(id_removed_file)), identity_removed)
+        return identity_removed
+
+class Draw:
+    &#34;&#34;&#34; Draw landmarks with matplotlib &#34;&#34;&#34;
+    data_proc = None
+    plots_dir = None
+    frames = None
+    dimensions = {&#39;width&#39;: 500, &#39;height&#39;: 500}
+    axes = None
+    bounds = {}
+
+    def __init__(self, plots_dir=None, data_proc=None, dimensions=None):
+        if data_proc is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = data_proc
+        type(self).frames = self.data_proc.dlib_proc.frames
+        if plots_dir is None:
+            type(self).plots_dir = Path(self.frames.root_dir, &#39;plots&#39;)
+        else:
+            type(self).plots_dir = Path(plots_dir)
+        if dimensions is not None:
+            type(self).dimensions = dimensions
+
+    def calc_mean(self, lmarks):
+        &#34;&#34;&#34; Calculalate mean points in landmark set &#34;&#34;&#34;
+        type(self).bounds = {&#39;mid&#39;: np.nanmean(lmarks, 0),
+                             &#39;xmid&#39;: np.nanmean(lmarks[..., 0]),
+                             &#39;ymid&#39;: np.nanmean(lmarks[..., 1])}
+
+    def _plot_features(self, lmarks, frame_num=0):
+        &#34;&#34;&#34; calculate and plot facial features &#34;&#34;&#34;
+        features = {&#39;jaw&#39;: lmarks[frame_num, :17],
+                    &#39;eyebrow_r&#39;: lmarks[frame_num, 17:22],
+                    &#39;eyebrow_l&#39;: lmarks[frame_num, 22:27],
+                    &#39;nose_top&#39;: lmarks[frame_num, 27:31],
+                    &#39;nose_side_r&#39;: np.concatenate((lmarks[frame_num, 27:28],
+                                                   lmarks[frame_num, 31:32])),
+                    &#39;nose_side_l&#39;: np.concatenate((lmarks[frame_num, 27:28],
+                                                   lmarks[frame_num, 35:36])),
+                    &#39;nose_mid_r&#39;: lmarks[frame_num, 30:32],
+                    &#39;nose_mid_l&#39;: np.concatenate((lmarks[frame_num, 30:31],
+                                                  lmarks[frame_num, 35:36])),
+                    &#39;nose_bottom&#39;: lmarks[frame_num, 31:36],
+                    &#39;eye_r&#39;: np.concatenate((lmarks[frame_num, 36:42],
+                                             lmarks[frame_num, 36:37])),
+                    &#39;eye_l&#39;: np.concatenate((lmarks[frame_num, 42:48],
+                                             lmarks[frame_num, 42:43])),
+                    &#39;lips_out&#39;: np.concatenate((lmarks[frame_num, 48:60],
+                                                lmarks[frame_num, 48:49])),
+                    &#39;lips_in&#39;: np.concatenate((lmarks[frame_num, 60:],
+                                               lmarks[frame_num, 60:61]))}
+
+        self.axes.plot(features[&#39;jaw&#39;][:, 0], features[&#39;jaw&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eyebrow_r&#39;][:, 0], features[&#39;eyebrow_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eyebrow_l&#39;][:, 0], features[&#39;eyebrow_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_top&#39;][:, 0], features[&#39;nose_top&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_side_r&#39;][:, 0], features[&#39;nose_side_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_side_l&#39;][:, 0], features[&#39;nose_side_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_mid_r&#39;][:, 0], features[&#39;nose_mid_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_mid_l&#39;][:, 0], features[&#39;nose_mid_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_bottom&#39;][:, 0], features[&#39;nose_bottom&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eye_r&#39;][:, 0], features[&#39;eye_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eye_l&#39;][:, 0], features[&#39;eye_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;lips_out&#39;][:, 0], features[&#39;lips_out&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;lips_in&#39;][:, 0], features[&#39;lips_in&#39;][:, 1], &#39;b-&#39;)
+
+    def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96,
+                     annot=False):
+        &#34;&#34;&#34; Plot landmarks and save &#34;&#34;&#34;
+        _, type(self).axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
+                                                   self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        if frame_num_sel is None:
+            for frame_num in range(lmarks.shape[0]):
+                self.save_scatter_frame(frame_num, lmarks, with_frame, annot=annot)
+        else:
+            self.save_scatter_frame(frame_num_sel, with_frame=with_frame,
+                                    annot=annot)
+
+    def save_scatter_frame(self, frame_num=30, lmarks=None, with_frame=True,
+                           annot=False):
+        &#34;&#34;&#34; Plot landmarks and save frame &#34;&#34;&#34;
+        self.axes.clear()
+        if lmarks is None:
+            lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        if with_frame:
+            image = plt.imread(self.frames.get_file_path(frame_num))
+            self.axes.imshow(image)
+        self.calc_mean(lmarks)
+        frame_left = self.bounds[&#39;xmid&#39;] - self.dimensions[&#39;width&#39;]/2
+        frame_right = self.bounds[&#39;xmid&#39;] + self.dimensions[&#39;width&#39;]/2
+        frame_bottom = self.bounds[&#39;ymid&#39;] - self.dimensions[&#39;height&#39;]/2
+        frame_top = self.bounds[&#39;ymid&#39;] + self.dimensions[&#39;height&#39;]/2
+        self.axes.set_xlim(frame_left, frame_right)
+        self.axes.set_ylim(frame_bottom, frame_top)
+        self.axes.invert_yaxis()
+        self.axes.scatter(lmarks[frame_num, :, 0],
+                          lmarks[frame_num, :, 1], marker=&#39;.&#39;)
+        if annot:
+            self.axes.annotate(&#39;Frame: &#39; + str(frame_num), xy=(
+                frame_left + 10, frame_top - 10), color=&#39;cyan&#39;)
+            for lmark_num, (point_x, point_y) in enumerate(
+                    lmarks[frame_num]):
+                self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
+        plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + &#39;.png&#39;))
+
+    def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
+        &#34;&#34;&#34; save line plots &#34;&#34;&#34;
+        _, self.axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
+                                             self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+        if lmarks is None:
+            lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        for frame_num in range(lmarks.shape[0]):
+            self.axes.clear()
+            if with_frame:
+                image = plt.imread(self.frames.get_file_path(frame_num))
+                self.axes.imshow(image)
+
+            self._plot_features(lmarks, frame_num)
+            self.axes.set_xlim(type(self).bounds[&#39;xmid&#39;] - (self.dimensions[&#39;width&#39;]/2),
+                               type(self).bounds[&#39;xmid&#39;] + (self.dimensions[&#39;width&#39;]/2))
+            self.axes.set_ylim(type(self).bounds[&#39;ymid&#39;] - (self.dimensions[&#39;height&#39;]/2),
+                               type(self).bounds[&#39;ymid&#39;] + (self.dimensions[&#39;height&#39;]/2))
+            self.axes.invert_yaxis()
+            if annot:
+                self.annotate(frame_num, lmarks)
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.frames.num_len) + &#39;.png&#39;))
+
+    def annotate(self, frame_num, lmarks):
+        &#34;&#34;&#34; Annote image with landmark and frame numbers &#34;&#34;&#34;
+        self.axes.annotate(&#39;Frame: &#39; + str(frame_num), xy=(
+            self.axes.get_xlim()[0] + 0.01, self.axes.get_ylim(
+                )[0] - 0.01), color=&#39;blue&#39;)
+        for lmark_num, (point_x, point_y) in enumerate(
+                lmarks[frame_num]):
+            self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
+
+    def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
+        &#34;&#34;&#34; save line plots with Procrustes analysis &#34;&#34;&#34;
+        _, self.axes = plt.subplots(figsize=(
+            self.dimensions[&#39;width&#39;]/dpi, self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+        lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        for frame_num in range(lmarks.shape[0]):
+            self.axes.clear()
+            self.axes.set_aspect(1)
+            self._plot_features(lmarks, frame_num)
+            self.axes.invert_yaxis()
+            if annot:
+                self.annotate(frame_num, lmarks)
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.frames.num_len) + &#39;.png&#39;))
+
+class Video:
+    &#34;&#34;&#34; FFmpeg video processing manager &#34;&#34;&#34;
+    frames = None
+    root_dir = None
+
+    def __init__(self, frames=None, root_dir=None):
+        if frames is None:
+            type(self).frames = Frames()
+        else:
+            type(self).frames = frames
+        if root_dir is None:
+            type(self).root_dir = self.frames.root_dir
+        else:
+            type(self).root_dir = Path(root_dir)
+
+    def extract_audio(self, video_in=None, audio_file=None):
+        &#34;&#34;&#34; Extract audio from video sample &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+        if audio_file is None:
+            audio_file = Path(self.root_dir, &#39;audio&#39;,
+                              Path(video_in).with_suffix(&#39;.wav&#39;).name)
+        Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in), &#39;-y&#39;,
+                str(audio_file)], check=True)
+
+    def extract_frames(self, video_in=None, start_number=0, quality=5):
+        &#34;&#34;&#34; Extract frames from video using FFmpeg &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+        frames_dir = self.frames.frames_dir
+        if frames_dir.is_dir():
+            shutil.rmtree(frames_dir)
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in),
+                &#39;-start_number&#39;, str(start_number), &#39;-qscale:v&#39;, str(quality),
+                str(Path(frames_dir, r&#39;%0&#39; + str(
+                    self.frames.num_len) + &#39;d&#39; + self.frames.suffix))], check=True)
+
+    def create_video(self, video_out=None, plots_dir=None, framerate=25,
+                     frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; create video from images &#34;&#34;&#34;
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;, &#39;plots.mp4&#39;)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+        if plots_dir is None:
+            plots_dir = Path(self.root_dir, &#39;plots&#39;)
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-f&#39;, &#39;image2&#39;, &#39;-framerate&#39;, str(framerate), &#39;-i&#39;,
+                str(Path(plots_dir, r&#39;%0&#39; + str(self.frames.num_len) + &#39;d.png&#39;)), &#39;-vf&#39;,
+                &#39;drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+                str(video_out)], check=True)
+
+    def stack_h(self, video_left=None, video_right=None, video_out=None):
+        &#34;&#34;&#34; stack videos horizontally &#34;&#34;&#34;
+        if video_left is None:
+            video_left = Path(self.root_dir, &#39;shared&#39;,
+                              &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
+        if video_right is None:
+            video_right = Path(self.root_dir, &#39;shared&#39;, &#39;identity_removed&#39;,
+                               &#39;obama2s.ir_painted_t.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;,
+                             Path(Path(video_left).name + &#39;comp_h.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_left), &#39;-i&#39;,
+                str(video_right), &#39;-filter_complex&#39;,
+                &#39;hstack=inputs=2&#39;, &#39;-y&#39;,
+                str(video_out)], check=True)
+
+    def stack_v(self, video_top=None, video_bottom=None, video_out=None):
+        &#34;&#34;&#34; stack videos vertically &#34;&#34;&#34;
+        if video_top is None:
+            video_top = Path(self.root_dir, &#39;shared&#39;,
+                             &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
+        if video_bottom is None:
+            video_bottom = Path(self.root_dir, &#39;shared&#39;, &#39;identity_removed&#39;,
+                                &#39;obama2s.ir_painted_t.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;,
+                             Path(Path(video_top).name + &#39;comp_v.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_top), &#39;-i&#39;,
+                str(video_bottom), &#39;-filter_complex&#39;,
+                &#39;vstack=inputs=2&#39;, &#39;-y&#39;,
+                str(video_out)], check=True)
+
+    def draw_text(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; add text to video frames &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;, Path(Path(video_in).name + &#39;t.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+                &#39;drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+                str(video_out)], check=True)
+
+    def prepare_ground_truth(self, video_in=None, video_out=None,
+                             frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;080815_WeeklyAddress.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;,
+                             Path(Path(video_in).name + &#39;_25t.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+                &#39;fps=25, drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20&#39;
+                &#39;:x=810:y=260,crop=500:500:800:250&#39;,
+                str(video_out)], check=True)
+
+    def prepare_anims(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; scale down, crop and add text to the animations &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;video&#39;, &#39;080815_WeeklyAddress_painted_.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;, Path(Path(video_in).name + &#39;t.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+                &#39;scale=500:500,drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+                str(video_out)], check=True)
+
+class Analysis:
+    &#34;&#34;&#34; Data extraction and analysis &#34;&#34;&#34;
+    data_proc = None
+    video = None
+    root_dir = None
+
+    def __init__(self, data_proc=None, video=None):
+        if data_proc is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = data_proc
+        if video is None:
+            type(self).video = Video()
+        else:
+            type(self).video = video
+        type(self).root_dir = self.video.root_dir
+
+    def calc_rmse(self, pred_out=None, audio_file=None):
+        &#34;&#34;&#34; Save predicted landmarks from the pre-trained model tegether with
+        extracted landmarks pre-processed and animated &#34;&#34;&#34;
+        if pred_out is None:
+            pred_out = Path(self.root_dir, &#39;pred_out&#39;)
+        if audio_file is None:
+            audio_file = Path(self.root_dir, &#39;audio&#39;,
+                              Path(self.data_proc.dlib_proc.video_file).with_suffix(&#39;.wav&#39;).name)
+        video_file = self.data_proc.dlib_proc.video_file
+        self.video.extract_audio(video_file, audio_file)
+        sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(Path(self.root_dir, &#39;audio&#39;)), &#39;-m&#39;,
+                &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;, str(pred_out), &#39;-s&#39;], check=True)
+        pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, &#39;predicted.npy&#39;))
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        lmarks_ir = self.data_proc.remove_identity(lmarks)
+        return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
+            (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="replication.Analysis"><code class="flex name class">
+<span>class <span class="ident">Analysis</span></span>
+<span>(</span><span>data_proc=None, video=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Data extraction and analysis</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Analysis:
+    &#34;&#34;&#34; Data extraction and analysis &#34;&#34;&#34;
+    data_proc = None
+    video = None
+    root_dir = None
+
+    def __init__(self, data_proc=None, video=None):
+        if data_proc is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = data_proc
+        if video is None:
+            type(self).video = Video()
+        else:
+            type(self).video = video
+        type(self).root_dir = self.video.root_dir
+
+    def calc_rmse(self, pred_out=None, audio_file=None):
+        &#34;&#34;&#34; Save predicted landmarks from the pre-trained model tegether with
+        extracted landmarks pre-processed and animated &#34;&#34;&#34;
+        if pred_out is None:
+            pred_out = Path(self.root_dir, &#39;pred_out&#39;)
+        if audio_file is None:
+            audio_file = Path(self.root_dir, &#39;audio&#39;,
+                              Path(self.data_proc.dlib_proc.video_file).with_suffix(&#39;.wav&#39;).name)
+        video_file = self.data_proc.dlib_proc.video_file
+        self.video.extract_audio(video_file, audio_file)
+        sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(Path(self.root_dir, &#39;audio&#39;)), &#39;-m&#39;,
+                &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;, str(pred_out), &#39;-s&#39;], check=True)
+        pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, &#39;predicted.npy&#39;))
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        lmarks_ir = self.data_proc.remove_identity(lmarks)
+        return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
+            (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="replication.Analysis.data_proc"><code class="name">var <span class="ident">data_proc</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Analysis.root_dir"><code class="name">var <span class="ident">root_dir</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Analysis.video"><code class="name">var <span class="ident">video</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="replication.Analysis.calc_rmse"><code class="name flex">
+<span>def <span class="ident">calc_rmse</span></span>(<span>self, pred_out=None, audio_file=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Save predicted landmarks from the pre-trained model tegether with
+extracted landmarks pre-processed and animated</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_rmse(self, pred_out=None, audio_file=None):
+    &#34;&#34;&#34; Save predicted landmarks from the pre-trained model tegether with
+    extracted landmarks pre-processed and animated &#34;&#34;&#34;
+    if pred_out is None:
+        pred_out = Path(self.root_dir, &#39;pred_out&#39;)
+    if audio_file is None:
+        audio_file = Path(self.root_dir, &#39;audio&#39;,
+                          Path(self.data_proc.dlib_proc.video_file).with_suffix(&#39;.wav&#39;).name)
+    video_file = self.data_proc.dlib_proc.video_file
+    self.video.extract_audio(video_file, audio_file)
+    sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(Path(self.root_dir, &#39;audio&#39;)), &#39;-m&#39;,
+            &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;, str(pred_out), &#39;-s&#39;], check=True)
+    pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, &#39;predicted.npy&#39;))
+    lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+    lmarks_ir = self.data_proc.remove_identity(lmarks)
+    return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
+        (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="replication.DataProcess"><code class="flex name class">
+<span>class <span class="ident">DataProcess</span></span>
+<span>(</span><span>video_file=None, dlib_proc=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculations and supporting methods required for the replication of experiments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DataProcess:
+    &#34;&#34;&#34; Calculations and supporting methods required for the replication of experiments &#34;&#34;&#34;
+    dlib_proc = None
+    video_file = None
+
+    def __init__(self, video_file=None, dlib_proc=None):
+        if dlib_proc is None:
+            type(self).dlib_proc = DlibProcess(video_file)
+        else:
+            type(self).dlib_proc = dlib_proc
+        type(self).video_file = self.dlib_proc.video_file
+
+    def get_procrustes(self, lmarks=None, lips_only=False):
+        &#34;&#34;&#34; Procrustes analysis - return landmarks best fit to mean landmarks &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.dlib_proc.get_all_lmarks()
+        if lips_only:
+            lmarks = lmarks[:, 48:, :]
+        mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
+        proc_lmarks = np.full(lmarks.shape, np.nan)
+        for frame_num in range(lmarks.shape[0]):
+            if ~np.isnan(lmarks[frame_num, 0, 0]):
+                _, proc_lmarks[frame_num], _ = procrustes(
+                    mean_lmarks[0], lmarks[frame_num])
+        if lips_only:
+            not_lips = np.full((proc_lmarks.shape[0], proc_lmarks.shape[1],
+                                48, proc_lmarks.shape[3]), np.nan)
+            proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
+        return proc_lmarks
+
+    def interpolate_lmarks(self, lmarks=None, old_rate=30, new_rate=25):
+        &#34;&#34;&#34; Change the frame rate of the extracted landmarks using linear
+            interpolation &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.get_procrustes()
+        old_frame_axis = np.arange(lmarks.shape[0])
+        new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(
+            lmarks.shape[0]*new_rate/old_rate))
+        new_lmarks = np.zeros((len(new_frame_axis),) + (lmarks.shape[1:]))
+        for ax1 in range(lmarks.shape[1]):
+            for ax2 in range(lmarks.shape[2]):
+                new_lmarks[:, ax1, ax2] = np.interp(new_frame_axis, old_frame_axis,
+                                                    lmarks[:, ax1, ax2])
+        return new_lmarks
+
+    def get_closed_mouth_frame(self, lmarks=None, zscore=1.3):
+        &#34;&#34;&#34; Determine frame with the minimum distance between the inner lips
+            excluding frames where the mouth is unusually wide or narrow &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.get_procrustes()
+        lip_r = 60
+        lip_l = 64
+        mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter(&#39;ignore&#39;, category=RuntimeWarning)
+            lmarks_filtered = np.nonzero(np.abs(stats.zscore(
+                mouth_width, nan_policy=&#39;omit&#39;)) &lt; zscore)
+        lip_top = slice(61, 64)
+        lip_bottom = slice(65, 68)
+        lip_dist = np.linalg.norm(lmarks[lmarks_filtered, lip_top] - lmarks[
+            lmarks_filtered, lip_bottom], axis=2)
+        return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
+
+    def remove_identity(self, lmarks=None, template=None, id_removed_file=None,
+                        zscore=0.1):
+        &#34;&#34;&#34; current frame - the closed mouth frame + template &#34;&#34;&#34;
+        if lmarks is None:
+            lmarks = self.get_procrustes()
+        if template is None:
+            template = Path(&#39;..&#39;, &#39;data&#39;, &#39;mean.npy&#39;)
+        lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
+        closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
+        template_2d = np.load(str(template))[:, :2]
+        identity_removed = lmarks - closed_mouth + template_2d
+        if id_removed_file is not None:
+            Path(id_removed_file).parent.mkdir(parents=True, exist_ok=True)
+            np.save(str(Path(id_removed_file)), identity_removed)
+        return identity_removed</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="replication.DataProcess.dlib_proc"><code class="name">var <span class="ident">dlib_proc</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.DataProcess.video_file"><code class="name">var <span class="ident">video_file</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="replication.DataProcess.get_closed_mouth_frame"><code class="name flex">
+<span>def <span class="ident">get_closed_mouth_frame</span></span>(<span>self, lmarks=None, zscore=1.3)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Determine frame with the minimum distance between the inner lips
+excluding frames where the mouth is unusually wide or narrow</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_closed_mouth_frame(self, lmarks=None, zscore=1.3):
+    &#34;&#34;&#34; Determine frame with the minimum distance between the inner lips
+        excluding frames where the mouth is unusually wide or narrow &#34;&#34;&#34;
+    if lmarks is None:
+        lmarks = self.get_procrustes()
+    lip_r = 60
+    lip_l = 64
+    mouth_width = np.linalg.norm(lmarks[:, lip_r] - lmarks[:, lip_l], axis=1)
+    with warnings.catch_warnings():
+        warnings.simplefilter(&#39;ignore&#39;, category=RuntimeWarning)
+        lmarks_filtered = np.nonzero(np.abs(stats.zscore(
+            mouth_width, nan_policy=&#39;omit&#39;)) &lt; zscore)
+    lip_top = slice(61, 64)
+    lip_bottom = slice(65, 68)
+    lip_dist = np.linalg.norm(lmarks[lmarks_filtered, lip_top] - lmarks[
+        lmarks_filtered, lip_bottom], axis=2)
+    return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]</code></pre>
+</details>
+</dd>
+<dt id="replication.DataProcess.get_procrustes"><code class="name flex">
+<span>def <span class="ident">get_procrustes</span></span>(<span>self, lmarks=None, lips_only=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Procrustes analysis - return landmarks best fit to mean landmarks</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_procrustes(self, lmarks=None, lips_only=False):
+    &#34;&#34;&#34; Procrustes analysis - return landmarks best fit to mean landmarks &#34;&#34;&#34;
+    if lmarks is None:
+        lmarks = self.dlib_proc.get_all_lmarks()
+    if lips_only:
+        lmarks = lmarks[:, 48:, :]
+    mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
+    proc_lmarks = np.full(lmarks.shape, np.nan)
+    for frame_num in range(lmarks.shape[0]):
+        if ~np.isnan(lmarks[frame_num, 0, 0]):
+            _, proc_lmarks[frame_num], _ = procrustes(
+                mean_lmarks[0], lmarks[frame_num])
+    if lips_only:
+        not_lips = np.full((proc_lmarks.shape[0], proc_lmarks.shape[1],
+                            48, proc_lmarks.shape[3]), np.nan)
+        proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
+    return proc_lmarks</code></pre>
+</details>
+</dd>
+<dt id="replication.DataProcess.interpolate_lmarks"><code class="name flex">
+<span>def <span class="ident">interpolate_lmarks</span></span>(<span>self, lmarks=None, old_rate=30, new_rate=25)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Change the frame rate of the extracted landmarks using linear
+interpolation</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def interpolate_lmarks(self, lmarks=None, old_rate=30, new_rate=25):
+    &#34;&#34;&#34; Change the frame rate of the extracted landmarks using linear
+        interpolation &#34;&#34;&#34;
+    if lmarks is None:
+        lmarks = self.get_procrustes()
+    old_frame_axis = np.arange(lmarks.shape[0])
+    new_frame_axis = np.linspace(0, lmarks.shape[0]-1, int(
+        lmarks.shape[0]*new_rate/old_rate))
+    new_lmarks = np.zeros((len(new_frame_axis),) + (lmarks.shape[1:]))
+    for ax1 in range(lmarks.shape[1]):
+        for ax2 in range(lmarks.shape[2]):
+            new_lmarks[:, ax1, ax2] = np.interp(new_frame_axis, old_frame_axis,
+                                                lmarks[:, ax1, ax2])
+    return new_lmarks</code></pre>
+</details>
+</dd>
+<dt id="replication.DataProcess.remove_identity"><code class="name flex">
+<span>def <span class="ident">remove_identity</span></span>(<span>self, lmarks=None, template=None, id_removed_file=None, zscore=0.1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>current frame - the closed mouth frame + template</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def remove_identity(self, lmarks=None, template=None, id_removed_file=None,
+                    zscore=0.1):
+    &#34;&#34;&#34; current frame - the closed mouth frame + template &#34;&#34;&#34;
+    if lmarks is None:
+        lmarks = self.get_procrustes()
+    if template is None:
+        template = Path(&#39;..&#39;, &#39;data&#39;, &#39;mean.npy&#39;)
+    lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
+    closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
+    template_2d = np.load(str(template))[:, :2]
+    identity_removed = lmarks - closed_mouth + template_2d
+    if id_removed_file is not None:
+        Path(id_removed_file).parent.mkdir(parents=True, exist_ok=True)
+        np.save(str(Path(id_removed_file)), identity_removed)
+    return identity_removed</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="replication.DlibProcess"><code class="flex name class">
+<span>class <span class="ident">DlibProcess</span></span>
+<span>(</span><span>video_file=None, lmarks_file=None, frames=None, model_url='https://raw.github.com/davisking/dlib-models/master/shape_predictor_68_face_landmarks.dat.bz2')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Dlib facial landmark extraction manager </p>
+<p>initialize DLib, download model if neccessary</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DlibProcess:
+    &#34;&#34;&#34; Dlib facial landmark extraction manager &#34;&#34;&#34;
+    rgb_image = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=rgb_imag#dlib.load_rgb_image &#34;&#34;&#34;
+    frame_num = None
+    &#34;&#34;&#34; Frame sequence number &#34;&#34;&#34;
+    shape = None
+    detector = None
+    predictor = None
+    frames = None
+    &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
+    lmarks = np.empty((0, 68, 2))
+    lmarks_file = None
+    video_file = None
+
+    def __init__(self, video_file=None, lmarks_file=None, frames=None,
+                 model_url=&#39;https://raw.github.com/davisking/dlib-models/master/&#39;
+                           &#39;shape_predictor_68_face_landmarks.dat.bz2&#39;):
+        &#34;&#34;&#34; initialize DLib, download model if neccessary &#34;&#34;&#34;
+        if frames is None:
+            type(self).frames = Frames()
+        else:
+            type(self).frames = frames
+
+        if video_file is None:
+            type(self).video_file = Path(self.frames.root_dir, &#39;shared&#39;, &#39;obama2s.npy&#39;)
+        else:
+            type(self).video_file = Path(video_file)
+
+        if lmarks_file is None:
+            type(self).lmarks_file = Path(self.frames.root_dir, &#39;data&#39;,
+                                          Path(self.video_file).with_suffix(&#39;.npy&#39;).name)
+        else:
+            type(self).lmarks_file = Path(lmarks_file)
+        type(self).lmarks_file.parent.mkdir(parents=True, exist_ok=True)
+
+        model_file = Path(Path(&#39;..&#39;, &#39;data&#39;), Path(model_url).stem)
+        if not model_file.is_file():
+            print(&#39;Model &#39; + str(model_file) + &#39; not found&#39;)
+            print(&#39;Downloading from &#39; + model_url)
+            with urllib.request.urlopen(model_url) as response, open(
+                    model_file, &#39;wb&#39;) as model:
+                model.write(bz2.decompress(response.read()))
+        type(self).detector = dlib.get_frontal_face_detector()
+        type(self).predictor = dlib.shape_predictor(str(model_file))
+
+    def get_shape(self, frame_num=30, face_num=0):
+        &#34;&#34;&#34; load image and attempt to extract shape predictor &#34;&#34;&#34;
+        if frame_num != self.frame_num or self.shape is None:
+            image_file_path = self.frames.get_file_path(frame_num)
+            type(self).rgb_image = dlib.load_rgb_image(str(image_file_path))
+            if self.rgb_image is not None:
+                print(&#39;Frame &#39;, frame_num, &#39; extracting faces&#39;)
+                faces = self.detector(self.rgb_image, 1)
+                if len(faces) &gt; 0:
+                    print(&#39;Frame &#39;, frame_num, &#39; face &#39;, face_num, &#39; extracting landmarks&#39;)
+                    type(self).frame_num = frame_num
+                    type(self).shape = self.predictor(self.rgb_image, faces[face_num])
+        return self.shape
+
+    def get_lmarks(self, frame_num=30, face_num=0):
+        &#34;&#34;&#34; load image and attempt to extract landmark &#34;&#34;&#34;
+        shape = self.get_shape(frame_num, face_num)
+        if shape is None:
+            return np.full((1, 68, 2), np.nan)
+        return np.array([(part.x, part.y) for part in shape.parts()]).reshape((1, 68, 2))
+
+    def get_all_lmarks(self, new_extract=False, lmarks_file=None):
+        &#34;&#34;&#34; Get landmarks from face for all frames as ndarray &#34;&#34;&#34;
+        if lmarks_file is None:
+            lmarks_file = self.lmarks_file
+        if not new_extract and self.lmarks_file.is_file():
+            type(self).lmarks = np.load(self.lmarks_file)
+            return self.lmarks
+        if not self.frames.get_frame_nums():
+            Video(self.frames).extract_frames(self.video_file)
+        for frame_num in self.frames.get_frame_nums():
+            type(self).lmarks = np.concatenate([self.lmarks, self.get_lmarks(frame_num)])
+        np.save(self.lmarks_file, self.lmarks)
+        return self.lmarks
+
+    def display_overlay(self, frame_num=30, face_num=0):
+        &#34;&#34;&#34; Display image overlayed with landmarks &#34;&#34;&#34;
+        win = dlib.image_window()
+        win.clear_overlay()
+        self.get_lmarks(frame_num, face_num)
+        win.set_image(self.rgb_image)
+        if self.shape is not None:
+            win.add_overlay(self.shape)
+        dlib.hit_enter_to_continue()</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="replication.DlibProcess.detector"><code class="name">var <span class="ident">detector</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.DlibProcess.frame_num"><code class="name">var <span class="ident">frame_num</span></code></dt>
+<dd>
+<div class="desc"><p>Frame sequence number</p></div>
+</dd>
+<dt id="replication.DlibProcess.frames"><code class="name">var <span class="ident">frames</span></code></dt>
+<dd>
+<div class="desc"><p><a href="#replication.Frames">Frames</a></p></div>
+</dd>
+<dt id="replication.DlibProcess.lmarks"><code class="name">var <span class="ident">lmarks</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.DlibProcess.lmarks_file"><code class="name">var <span class="ident">lmarks_file</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.DlibProcess.predictor"><code class="name">var <span class="ident">predictor</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.DlibProcess.rgb_image"><code class="name">var <span class="ident">rgb_image</span></code></dt>
+<dd>
+<div class="desc"><p><a href="http://dlib.net/python/index.html?highlight=rgb_imag#dlib.load_rgb_image">http://dlib.net/python/index.html?highlight=rgb_imag#dlib.load_rgb_image</a></p></div>
+</dd>
+<dt id="replication.DlibProcess.shape"><code class="name">var <span class="ident">shape</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.DlibProcess.video_file"><code class="name">var <span class="ident">video_file</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="replication.DlibProcess.display_overlay"><code class="name flex">
+<span>def <span class="ident">display_overlay</span></span>(<span>self, frame_num=30, face_num=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Display image overlayed with landmarks</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def display_overlay(self, frame_num=30, face_num=0):
+    &#34;&#34;&#34; Display image overlayed with landmarks &#34;&#34;&#34;
+    win = dlib.image_window()
+    win.clear_overlay()
+    self.get_lmarks(frame_num, face_num)
+    win.set_image(self.rgb_image)
+    if self.shape is not None:
+        win.add_overlay(self.shape)
+    dlib.hit_enter_to_continue()</code></pre>
+</details>
+</dd>
+<dt id="replication.DlibProcess.get_all_lmarks"><code class="name flex">
+<span>def <span class="ident">get_all_lmarks</span></span>(<span>self, new_extract=False, lmarks_file=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get landmarks from face for all frames as ndarray</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_all_lmarks(self, new_extract=False, lmarks_file=None):
+    &#34;&#34;&#34; Get landmarks from face for all frames as ndarray &#34;&#34;&#34;
+    if lmarks_file is None:
+        lmarks_file = self.lmarks_file
+    if not new_extract and self.lmarks_file.is_file():
+        type(self).lmarks = np.load(self.lmarks_file)
+        return self.lmarks
+    if not self.frames.get_frame_nums():
+        Video(self.frames).extract_frames(self.video_file)
+    for frame_num in self.frames.get_frame_nums():
+        type(self).lmarks = np.concatenate([self.lmarks, self.get_lmarks(frame_num)])
+    np.save(self.lmarks_file, self.lmarks)
+    return self.lmarks</code></pre>
+</details>
+</dd>
+<dt id="replication.DlibProcess.get_lmarks"><code class="name flex">
+<span>def <span class="ident">get_lmarks</span></span>(<span>self, frame_num=30, face_num=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>load image and attempt to extract landmark</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_lmarks(self, frame_num=30, face_num=0):
+    &#34;&#34;&#34; load image and attempt to extract landmark &#34;&#34;&#34;
+    shape = self.get_shape(frame_num, face_num)
+    if shape is None:
+        return np.full((1, 68, 2), np.nan)
+    return np.array([(part.x, part.y) for part in shape.parts()]).reshape((1, 68, 2))</code></pre>
+</details>
+</dd>
+<dt id="replication.DlibProcess.get_shape"><code class="name flex">
+<span>def <span class="ident">get_shape</span></span>(<span>self, frame_num=30, face_num=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>load image and attempt to extract shape predictor</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_shape(self, frame_num=30, face_num=0):
+    &#34;&#34;&#34; load image and attempt to extract shape predictor &#34;&#34;&#34;
+    if frame_num != self.frame_num or self.shape is None:
+        image_file_path = self.frames.get_file_path(frame_num)
+        type(self).rgb_image = dlib.load_rgb_image(str(image_file_path))
+        if self.rgb_image is not None:
+            print(&#39;Frame &#39;, frame_num, &#39; extracting faces&#39;)
+            faces = self.detector(self.rgb_image, 1)
+            if len(faces) &gt; 0:
+                print(&#39;Frame &#39;, frame_num, &#39; face &#39;, face_num, &#39; extracting landmarks&#39;)
+                type(self).frame_num = frame_num
+                type(self).shape = self.predictor(self.rgb_image, faces[face_num])
+    return self.shape</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="replication.Draw"><code class="flex name class">
+<span>class <span class="ident">Draw</span></span>
+<span>(</span><span>plots_dir=None, data_proc=None, dimensions=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draw landmarks with matplotlib</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Draw:
+    &#34;&#34;&#34; Draw landmarks with matplotlib &#34;&#34;&#34;
+    data_proc = None
+    plots_dir = None
+    frames = None
+    dimensions = {&#39;width&#39;: 500, &#39;height&#39;: 500}
+    axes = None
+    bounds = {}
+
+    def __init__(self, plots_dir=None, data_proc=None, dimensions=None):
+        if data_proc is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = data_proc
+        type(self).frames = self.data_proc.dlib_proc.frames
+        if plots_dir is None:
+            type(self).plots_dir = Path(self.frames.root_dir, &#39;plots&#39;)
+        else:
+            type(self).plots_dir = Path(plots_dir)
+        if dimensions is not None:
+            type(self).dimensions = dimensions
+
+    def calc_mean(self, lmarks):
+        &#34;&#34;&#34; Calculalate mean points in landmark set &#34;&#34;&#34;
+        type(self).bounds = {&#39;mid&#39;: np.nanmean(lmarks, 0),
+                             &#39;xmid&#39;: np.nanmean(lmarks[..., 0]),
+                             &#39;ymid&#39;: np.nanmean(lmarks[..., 1])}
+
+    def _plot_features(self, lmarks, frame_num=0):
+        &#34;&#34;&#34; calculate and plot facial features &#34;&#34;&#34;
+        features = {&#39;jaw&#39;: lmarks[frame_num, :17],
+                    &#39;eyebrow_r&#39;: lmarks[frame_num, 17:22],
+                    &#39;eyebrow_l&#39;: lmarks[frame_num, 22:27],
+                    &#39;nose_top&#39;: lmarks[frame_num, 27:31],
+                    &#39;nose_side_r&#39;: np.concatenate((lmarks[frame_num, 27:28],
+                                                   lmarks[frame_num, 31:32])),
+                    &#39;nose_side_l&#39;: np.concatenate((lmarks[frame_num, 27:28],
+                                                   lmarks[frame_num, 35:36])),
+                    &#39;nose_mid_r&#39;: lmarks[frame_num, 30:32],
+                    &#39;nose_mid_l&#39;: np.concatenate((lmarks[frame_num, 30:31],
+                                                  lmarks[frame_num, 35:36])),
+                    &#39;nose_bottom&#39;: lmarks[frame_num, 31:36],
+                    &#39;eye_r&#39;: np.concatenate((lmarks[frame_num, 36:42],
+                                             lmarks[frame_num, 36:37])),
+                    &#39;eye_l&#39;: np.concatenate((lmarks[frame_num, 42:48],
+                                             lmarks[frame_num, 42:43])),
+                    &#39;lips_out&#39;: np.concatenate((lmarks[frame_num, 48:60],
+                                                lmarks[frame_num, 48:49])),
+                    &#39;lips_in&#39;: np.concatenate((lmarks[frame_num, 60:],
+                                               lmarks[frame_num, 60:61]))}
+
+        self.axes.plot(features[&#39;jaw&#39;][:, 0], features[&#39;jaw&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eyebrow_r&#39;][:, 0], features[&#39;eyebrow_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eyebrow_l&#39;][:, 0], features[&#39;eyebrow_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_top&#39;][:, 0], features[&#39;nose_top&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_side_r&#39;][:, 0], features[&#39;nose_side_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_side_l&#39;][:, 0], features[&#39;nose_side_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_mid_r&#39;][:, 0], features[&#39;nose_mid_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_mid_l&#39;][:, 0], features[&#39;nose_mid_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;nose_bottom&#39;][:, 0], features[&#39;nose_bottom&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eye_r&#39;][:, 0], features[&#39;eye_r&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;eye_l&#39;][:, 0], features[&#39;eye_l&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;lips_out&#39;][:, 0], features[&#39;lips_out&#39;][:, 1], &#39;b-&#39;)
+        self.axes.plot(features[&#39;lips_in&#39;][:, 0], features[&#39;lips_in&#39;][:, 1], &#39;b-&#39;)
+
+    def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96,
+                     annot=False):
+        &#34;&#34;&#34; Plot landmarks and save &#34;&#34;&#34;
+        _, type(self).axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
+                                                   self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        if frame_num_sel is None:
+            for frame_num in range(lmarks.shape[0]):
+                self.save_scatter_frame(frame_num, lmarks, with_frame, annot=annot)
+        else:
+            self.save_scatter_frame(frame_num_sel, with_frame=with_frame,
+                                    annot=annot)
+
+    def save_scatter_frame(self, frame_num=30, lmarks=None, with_frame=True,
+                           annot=False):
+        &#34;&#34;&#34; Plot landmarks and save frame &#34;&#34;&#34;
+        self.axes.clear()
+        if lmarks is None:
+            lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        if with_frame:
+            image = plt.imread(self.frames.get_file_path(frame_num))
+            self.axes.imshow(image)
+        self.calc_mean(lmarks)
+        frame_left = self.bounds[&#39;xmid&#39;] - self.dimensions[&#39;width&#39;]/2
+        frame_right = self.bounds[&#39;xmid&#39;] + self.dimensions[&#39;width&#39;]/2
+        frame_bottom = self.bounds[&#39;ymid&#39;] - self.dimensions[&#39;height&#39;]/2
+        frame_top = self.bounds[&#39;ymid&#39;] + self.dimensions[&#39;height&#39;]/2
+        self.axes.set_xlim(frame_left, frame_right)
+        self.axes.set_ylim(frame_bottom, frame_top)
+        self.axes.invert_yaxis()
+        self.axes.scatter(lmarks[frame_num, :, 0],
+                          lmarks[frame_num, :, 1], marker=&#39;.&#39;)
+        if annot:
+            self.axes.annotate(&#39;Frame: &#39; + str(frame_num), xy=(
+                frame_left + 10, frame_top - 10), color=&#39;cyan&#39;)
+            for lmark_num, (point_x, point_y) in enumerate(
+                    lmarks[frame_num]):
+                self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
+        plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + &#39;.png&#39;))
+
+    def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
+        &#34;&#34;&#34; save line plots &#34;&#34;&#34;
+        _, self.axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
+                                             self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+        if lmarks is None:
+            lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        for frame_num in range(lmarks.shape[0]):
+            self.axes.clear()
+            if with_frame:
+                image = plt.imread(self.frames.get_file_path(frame_num))
+                self.axes.imshow(image)
+
+            self._plot_features(lmarks, frame_num)
+            self.axes.set_xlim(type(self).bounds[&#39;xmid&#39;] - (self.dimensions[&#39;width&#39;]/2),
+                               type(self).bounds[&#39;xmid&#39;] + (self.dimensions[&#39;width&#39;]/2))
+            self.axes.set_ylim(type(self).bounds[&#39;ymid&#39;] - (self.dimensions[&#39;height&#39;]/2),
+                               type(self).bounds[&#39;ymid&#39;] + (self.dimensions[&#39;height&#39;]/2))
+            self.axes.invert_yaxis()
+            if annot:
+                self.annotate(frame_num, lmarks)
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.frames.num_len) + &#39;.png&#39;))
+
+    def annotate(self, frame_num, lmarks):
+        &#34;&#34;&#34; Annote image with landmark and frame numbers &#34;&#34;&#34;
+        self.axes.annotate(&#39;Frame: &#39; + str(frame_num), xy=(
+            self.axes.get_xlim()[0] + 0.01, self.axes.get_ylim(
+                )[0] - 0.01), color=&#39;blue&#39;)
+        for lmark_num, (point_x, point_y) in enumerate(
+                lmarks[frame_num]):
+            self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
+
+    def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
+        &#34;&#34;&#34; save line plots with Procrustes analysis &#34;&#34;&#34;
+        _, self.axes = plt.subplots(figsize=(
+            self.dimensions[&#39;width&#39;]/dpi, self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+        lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
+        if self.plots_dir.is_dir():
+            shutil.rmtree(self.plots_dir)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        for frame_num in range(lmarks.shape[0]):
+            self.axes.clear()
+            self.axes.set_aspect(1)
+            self._plot_features(lmarks, frame_num)
+            self.axes.invert_yaxis()
+            if annot:
+                self.annotate(frame_num, lmarks)
+            plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+                self.frames.num_len) + &#39;.png&#39;))</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="replication.Draw.axes"><code class="name">var <span class="ident">axes</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Draw.bounds"><code class="name">var <span class="ident">bounds</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Draw.data_proc"><code class="name">var <span class="ident">data_proc</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Draw.dimensions"><code class="name">var <span class="ident">dimensions</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Draw.frames"><code class="name">var <span class="ident">frames</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Draw.plots_dir"><code class="name">var <span class="ident">plots_dir</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="replication.Draw.annotate"><code class="name flex">
+<span>def <span class="ident">annotate</span></span>(<span>self, frame_num, lmarks)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Annote image with landmark and frame numbers</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def annotate(self, frame_num, lmarks):
+    &#34;&#34;&#34; Annote image with landmark and frame numbers &#34;&#34;&#34;
+    self.axes.annotate(&#39;Frame: &#39; + str(frame_num), xy=(
+        self.axes.get_xlim()[0] + 0.01, self.axes.get_ylim(
+            )[0] - 0.01), color=&#39;blue&#39;)
+    for lmark_num, (point_x, point_y) in enumerate(
+            lmarks[frame_num]):
+        self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))</code></pre>
+</details>
+</dd>
+<dt id="replication.Draw.calc_mean"><code class="name flex">
+<span>def <span class="ident">calc_mean</span></span>(<span>self, lmarks)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculalate mean points in landmark set</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_mean(self, lmarks):
+    &#34;&#34;&#34; Calculalate mean points in landmark set &#34;&#34;&#34;
+    type(self).bounds = {&#39;mid&#39;: np.nanmean(lmarks, 0),
+                         &#39;xmid&#39;: np.nanmean(lmarks[..., 0]),
+                         &#39;ymid&#39;: np.nanmean(lmarks[..., 1])}</code></pre>
+</details>
+</dd>
+<dt id="replication.Draw.save_plots"><code class="name flex">
+<span>def <span class="ident">save_plots</span></span>(<span>self, lmarks=None, with_frame=True, annot=False, dpi=96)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>save line plots</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
+    &#34;&#34;&#34; save line plots &#34;&#34;&#34;
+    _, self.axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
+                                         self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+    if lmarks is None:
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+    if self.plots_dir.is_dir():
+        shutil.rmtree(self.plots_dir)
+    self.plots_dir.mkdir(parents=True, exist_ok=True)
+    for frame_num in range(lmarks.shape[0]):
+        self.axes.clear()
+        if with_frame:
+            image = plt.imread(self.frames.get_file_path(frame_num))
+            self.axes.imshow(image)
+
+        self._plot_features(lmarks, frame_num)
+        self.axes.set_xlim(type(self).bounds[&#39;xmid&#39;] - (self.dimensions[&#39;width&#39;]/2),
+                           type(self).bounds[&#39;xmid&#39;] + (self.dimensions[&#39;width&#39;]/2))
+        self.axes.set_ylim(type(self).bounds[&#39;ymid&#39;] - (self.dimensions[&#39;height&#39;]/2),
+                           type(self).bounds[&#39;ymid&#39;] + (self.dimensions[&#39;height&#39;]/2))
+        self.axes.invert_yaxis()
+        if annot:
+            self.annotate(frame_num, lmarks)
+        plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+            self.frames.num_len) + &#39;.png&#39;))</code></pre>
+</details>
+</dd>
+<dt id="replication.Draw.save_plots_proc"><code class="name flex">
+<span>def <span class="ident">save_plots_proc</span></span>(<span>self, dpi=96, annot=False, lips_only=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>save line plots with Procrustes analysis</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
+    &#34;&#34;&#34; save line plots with Procrustes analysis &#34;&#34;&#34;
+    _, self.axes = plt.subplots(figsize=(
+        self.dimensions[&#39;width&#39;]/dpi, self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+    lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
+    if self.plots_dir.is_dir():
+        shutil.rmtree(self.plots_dir)
+    self.plots_dir.mkdir(parents=True, exist_ok=True)
+    for frame_num in range(lmarks.shape[0]):
+        self.axes.clear()
+        self.axes.set_aspect(1)
+        self._plot_features(lmarks, frame_num)
+        self.axes.invert_yaxis()
+        if annot:
+            self.annotate(frame_num, lmarks)
+        plt.savefig(Path(self.plots_dir, str(frame_num).zfill(
+            self.frames.num_len) + &#39;.png&#39;))</code></pre>
+</details>
+</dd>
+<dt id="replication.Draw.save_scatter"><code class="name flex">
+<span>def <span class="ident">save_scatter</span></span>(<span>self, frame_num_sel=None, with_frame=True, dpi=96, annot=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Plot landmarks and save</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_scatter(self, frame_num_sel=None, with_frame=True, dpi=96,
+                 annot=False):
+    &#34;&#34;&#34; Plot landmarks and save &#34;&#34;&#34;
+    _, type(self).axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
+                                               self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
+    lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+    if self.plots_dir.is_dir():
+        shutil.rmtree(self.plots_dir)
+    self.plots_dir.mkdir(parents=True, exist_ok=True)
+    if frame_num_sel is None:
+        for frame_num in range(lmarks.shape[0]):
+            self.save_scatter_frame(frame_num, lmarks, with_frame, annot=annot)
+    else:
+        self.save_scatter_frame(frame_num_sel, with_frame=with_frame,
+                                annot=annot)</code></pre>
+</details>
+</dd>
+<dt id="replication.Draw.save_scatter_frame"><code class="name flex">
+<span>def <span class="ident">save_scatter_frame</span></span>(<span>self, frame_num=30, lmarks=None, with_frame=True, annot=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Plot landmarks and save frame</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_scatter_frame(self, frame_num=30, lmarks=None, with_frame=True,
+                       annot=False):
+    &#34;&#34;&#34; Plot landmarks and save frame &#34;&#34;&#34;
+    self.axes.clear()
+    if lmarks is None:
+        lmarks = self.data_proc.dlib_proc.get_all_lmarks()
+    if with_frame:
+        image = plt.imread(self.frames.get_file_path(frame_num))
+        self.axes.imshow(image)
+    self.calc_mean(lmarks)
+    frame_left = self.bounds[&#39;xmid&#39;] - self.dimensions[&#39;width&#39;]/2
+    frame_right = self.bounds[&#39;xmid&#39;] + self.dimensions[&#39;width&#39;]/2
+    frame_bottom = self.bounds[&#39;ymid&#39;] - self.dimensions[&#39;height&#39;]/2
+    frame_top = self.bounds[&#39;ymid&#39;] + self.dimensions[&#39;height&#39;]/2
+    self.axes.set_xlim(frame_left, frame_right)
+    self.axes.set_ylim(frame_bottom, frame_top)
+    self.axes.invert_yaxis()
+    self.axes.scatter(lmarks[frame_num, :, 0],
+                      lmarks[frame_num, :, 1], marker=&#39;.&#39;)
+    if annot:
+        self.axes.annotate(&#39;Frame: &#39; + str(frame_num), xy=(
+            frame_left + 10, frame_top - 10), color=&#39;cyan&#39;)
+        for lmark_num, (point_x, point_y) in enumerate(
+                lmarks[frame_num]):
+            self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
+    plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + &#39;.png&#39;))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="replication.Frames"><code class="flex name class">
+<span>class <span class="ident">Frames</span></span>
+<span>(</span><span>frames_dir=None, suffix=None, num_len=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Frame file manager</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Frames:
+    &#34;&#34;&#34; Frame file manager &#34;&#34;&#34;
+    root_dir = Path(&#39;..&#39;, &#39;replic&#39;)
+    &#34;&#34;&#34; Toolkit working directory &#34;&#34;&#34;
+    frames_dir = Path(root_dir, &#39;frames&#39;)
+    &#34;&#34;&#34; Location of frames extracted from video &#34;&#34;&#34;
+    suffix = &#39;.jpeg&#39;
+    &#34;&#34;&#34; Frame file extension &#34;&#34;&#34;
+    num_len = 4
+    &#34;&#34;&#34; Length of frame file sequence number &#34;&#34;&#34;
+
+    def __init__(self, frames_dir=None, suffix=None, num_len=None):
+        if frames_dir is not None:
+            type(self).frames_dir = Path(frames_dir)
+        if suffix is not None:
+            type(self).suffix = suffix
+        if num_len is not None:
+            type(self).num_len = num_len
+
+    def get_file_path(self, frame_num=30):
+        &#34;&#34;&#34; Build file path from frame number &#34;&#34;&#34;
+        return str(Path(self.frames_dir, str(frame_num).zfill(
+            self.num_len)).with_suffix(self.suffix))
+
+    def get_frame_file_names(self):
+        &#34;&#34;&#34; Get list of frame files &#34;&#34;&#34;
+        return sorted(self.frames_dir.glob(&#39;*&#39; + self.suffix))
+
+    def get_frame_nums(self):
+        &#34;&#34;&#34; Get list of frame numbers &#34;&#34;&#34;
+        frames = self.get_frame_file_names()
+        return [int(Path(frame).stem) for frame in frames]</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="replication.Frames.frames_dir"><code class="name">var <span class="ident">frames_dir</span></code></dt>
+<dd>
+<div class="desc"><p>Location of frames extracted from video</p></div>
+</dd>
+<dt id="replication.Frames.num_len"><code class="name">var <span class="ident">num_len</span></code></dt>
+<dd>
+<div class="desc"><p>Length of frame file sequence number</p></div>
+</dd>
+<dt id="replication.Frames.root_dir"><code class="name">var <span class="ident">root_dir</span></code></dt>
+<dd>
+<div class="desc"><p>Toolkit working directory</p></div>
+</dd>
+<dt id="replication.Frames.suffix"><code class="name">var <span class="ident">suffix</span></code></dt>
+<dd>
+<div class="desc"><p>Frame file extension</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="replication.Frames.get_file_path"><code class="name flex">
+<span>def <span class="ident">get_file_path</span></span>(<span>self, frame_num=30)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Build file path from frame number</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_file_path(self, frame_num=30):
+    &#34;&#34;&#34; Build file path from frame number &#34;&#34;&#34;
+    return str(Path(self.frames_dir, str(frame_num).zfill(
+        self.num_len)).with_suffix(self.suffix))</code></pre>
+</details>
+</dd>
+<dt id="replication.Frames.get_frame_file_names"><code class="name flex">
+<span>def <span class="ident">get_frame_file_names</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get list of frame files</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_frame_file_names(self):
+    &#34;&#34;&#34; Get list of frame files &#34;&#34;&#34;
+    return sorted(self.frames_dir.glob(&#39;*&#39; + self.suffix))</code></pre>
+</details>
+</dd>
+<dt id="replication.Frames.get_frame_nums"><code class="name flex">
+<span>def <span class="ident">get_frame_nums</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get list of frame numbers</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_frame_nums(self):
+    &#34;&#34;&#34; Get list of frame numbers &#34;&#34;&#34;
+    frames = self.get_frame_file_names()
+    return [int(Path(frame).stem) for frame in frames]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="replication.Video"><code class="flex name class">
+<span>class <span class="ident">Video</span></span>
+<span>(</span><span>frames=None, root_dir=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>FFmpeg video processing manager</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Video:
+    &#34;&#34;&#34; FFmpeg video processing manager &#34;&#34;&#34;
+    frames = None
+    root_dir = None
+
+    def __init__(self, frames=None, root_dir=None):
+        if frames is None:
+            type(self).frames = Frames()
+        else:
+            type(self).frames = frames
+        if root_dir is None:
+            type(self).root_dir = self.frames.root_dir
+        else:
+            type(self).root_dir = Path(root_dir)
+
+    def extract_audio(self, video_in=None, audio_file=None):
+        &#34;&#34;&#34; Extract audio from video sample &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+        if audio_file is None:
+            audio_file = Path(self.root_dir, &#39;audio&#39;,
+                              Path(video_in).with_suffix(&#39;.wav&#39;).name)
+        Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in), &#39;-y&#39;,
+                str(audio_file)], check=True)
+
+    def extract_frames(self, video_in=None, start_number=0, quality=5):
+        &#34;&#34;&#34; Extract frames from video using FFmpeg &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+        frames_dir = self.frames.frames_dir
+        if frames_dir.is_dir():
+            shutil.rmtree(frames_dir)
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in),
+                &#39;-start_number&#39;, str(start_number), &#39;-qscale:v&#39;, str(quality),
+                str(Path(frames_dir, r&#39;%0&#39; + str(
+                    self.frames.num_len) + &#39;d&#39; + self.frames.suffix))], check=True)
+
+    def create_video(self, video_out=None, plots_dir=None, framerate=25,
+                     frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; create video from images &#34;&#34;&#34;
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;, &#39;plots.mp4&#39;)
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+        if plots_dir is None:
+            plots_dir = Path(self.root_dir, &#39;plots&#39;)
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-f&#39;, &#39;image2&#39;, &#39;-framerate&#39;, str(framerate), &#39;-i&#39;,
+                str(Path(plots_dir, r&#39;%0&#39; + str(self.frames.num_len) + &#39;d.png&#39;)), &#39;-vf&#39;,
+                &#39;drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+                str(video_out)], check=True)
+
+    def stack_h(self, video_left=None, video_right=None, video_out=None):
+        &#34;&#34;&#34; stack videos horizontally &#34;&#34;&#34;
+        if video_left is None:
+            video_left = Path(self.root_dir, &#39;shared&#39;,
+                              &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
+        if video_right is None:
+            video_right = Path(self.root_dir, &#39;shared&#39;, &#39;identity_removed&#39;,
+                               &#39;obama2s.ir_painted_t.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;,
+                             Path(Path(video_left).name + &#39;comp_h.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_left), &#39;-i&#39;,
+                str(video_right), &#39;-filter_complex&#39;,
+                &#39;hstack=inputs=2&#39;, &#39;-y&#39;,
+                str(video_out)], check=True)
+
+    def stack_v(self, video_top=None, video_bottom=None, video_out=None):
+        &#34;&#34;&#34; stack videos vertically &#34;&#34;&#34;
+        if video_top is None:
+            video_top = Path(self.root_dir, &#39;shared&#39;,
+                             &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
+        if video_bottom is None:
+            video_bottom = Path(self.root_dir, &#39;shared&#39;, &#39;identity_removed&#39;,
+                                &#39;obama2s.ir_painted_t.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;,
+                             Path(Path(video_top).name + &#39;comp_v.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_top), &#39;-i&#39;,
+                str(video_bottom), &#39;-filter_complex&#39;,
+                &#39;vstack=inputs=2&#39;, &#39;-y&#39;,
+                str(video_out)], check=True)
+
+    def draw_text(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; add text to video frames &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;, Path(Path(video_in).name + &#39;t.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+                &#39;drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+                str(video_out)], check=True)
+
+    def prepare_ground_truth(self, video_in=None, video_out=None,
+                             frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;shared&#39;, &#39;080815_WeeklyAddress.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;,
+                             Path(Path(video_in).name + &#39;_25t.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+                &#39;fps=25, drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20&#39;
+                &#39;:x=810:y=260,crop=500:500:800:250&#39;,
+                str(video_out)], check=True)
+
+    def prepare_anims(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+        &#34;&#34;&#34; scale down, crop and add text to the animations &#34;&#34;&#34;
+        if video_in is None:
+            video_in = Path(self.root_dir, &#39;video&#39;, &#39;080815_WeeklyAddress_painted_.mp4&#39;)
+        if video_out is None:
+            video_out = Path(self.root_dir, &#39;video&#39;, Path(Path(video_in).name + &#39;t.mp4&#39;))
+        Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+        sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+                &#39;scale=500:500,drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+                str(video_out)], check=True)</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="replication.Video.frames"><code class="name">var <span class="ident">frames</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="replication.Video.root_dir"><code class="name">var <span class="ident">root_dir</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="replication.Video.create_video"><code class="name flex">
+<span>def <span class="ident">create_video</span></span>(<span>self, video_out=None, plots_dir=None, framerate=25, frame_text='frame %{frame_num} %{pts}')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create video from images</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_video(self, video_out=None, plots_dir=None, framerate=25,
+                 frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+    &#34;&#34;&#34; create video from images &#34;&#34;&#34;
+    if video_out is None:
+        video_out = Path(self.root_dir, &#39;video&#39;, &#39;plots.mp4&#39;)
+    Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+    if plots_dir is None:
+        plots_dir = Path(self.root_dir, &#39;plots&#39;)
+    sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-f&#39;, &#39;image2&#39;, &#39;-framerate&#39;, str(framerate), &#39;-i&#39;,
+            str(Path(plots_dir, r&#39;%0&#39; + str(self.frames.num_len) + &#39;d.png&#39;)), &#39;-vf&#39;,
+            &#39;drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+            str(video_out)], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.draw_text"><code class="name flex">
+<span>def <span class="ident">draw_text</span></span>(<span>self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add text to video frames</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def draw_text(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+    &#34;&#34;&#34; add text to video frames &#34;&#34;&#34;
+    if video_in is None:
+        video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+    if video_out is None:
+        video_out = Path(self.root_dir, &#39;video&#39;, Path(Path(video_in).name + &#39;t.mp4&#39;))
+    Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+    sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+            &#39;drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+            str(video_out)], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.extract_audio"><code class="name flex">
+<span>def <span class="ident">extract_audio</span></span>(<span>self, video_in=None, audio_file=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extract audio from video sample</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def extract_audio(self, video_in=None, audio_file=None):
+    &#34;&#34;&#34; Extract audio from video sample &#34;&#34;&#34;
+    if video_in is None:
+        video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+    if audio_file is None:
+        audio_file = Path(self.root_dir, &#39;audio&#39;,
+                          Path(video_in).with_suffix(&#39;.wav&#39;).name)
+    Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
+    sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in), &#39;-y&#39;,
+            str(audio_file)], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.extract_frames"><code class="name flex">
+<span>def <span class="ident">extract_frames</span></span>(<span>self, video_in=None, start_number=0, quality=5)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extract frames from video using FFmpeg</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def extract_frames(self, video_in=None, start_number=0, quality=5):
+    &#34;&#34;&#34; Extract frames from video using FFmpeg &#34;&#34;&#34;
+    if video_in is None:
+        video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
+    frames_dir = self.frames.frames_dir
+    if frames_dir.is_dir():
+        shutil.rmtree(frames_dir)
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in),
+            &#39;-start_number&#39;, str(start_number), &#39;-qscale:v&#39;, str(quality),
+            str(Path(frames_dir, r&#39;%0&#39; + str(
+                self.frames.num_len) + &#39;d&#39; + self.frames.suffix))], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.prepare_anims"><code class="name flex">
+<span>def <span class="ident">prepare_anims</span></span>(<span>self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>scale down, crop and add text to the animations</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def prepare_anims(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+    &#34;&#34;&#34; scale down, crop and add text to the animations &#34;&#34;&#34;
+    if video_in is None:
+        video_in = Path(self.root_dir, &#39;video&#39;, &#39;080815_WeeklyAddress_painted_.mp4&#39;)
+    if video_out is None:
+        video_out = Path(self.root_dir, &#39;video&#39;, Path(Path(video_in).name + &#39;t.mp4&#39;))
+    Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+    sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+            &#39;scale=500:500,drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20:x=10:y=10&#39;,
+            str(video_out)], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.prepare_ground_truth"><code class="name flex">
+<span>def <span class="ident">prepare_ground_truth</span></span>(<span>self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>adjust the framerate to 25fps, crop and add text to the source video</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def prepare_ground_truth(self, video_in=None, video_out=None,
+                         frame_text=&#39;frame %{frame_num} %{pts}&#39;):
+    &#34;&#34;&#34; adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
+    if video_in is None:
+        video_in = Path(self.root_dir, &#39;shared&#39;, &#39;080815_WeeklyAddress.mp4&#39;)
+    if video_out is None:
+        video_out = Path(self.root_dir, &#39;video&#39;,
+                         Path(Path(video_in).name + &#39;_25t.mp4&#39;))
+    Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+    sp.run([&#39;ffmpeg&#39;, &#39;-y&#39;, &#39;-i&#39;, str(video_in), &#39;-vf&#39;,
+            &#39;fps=25, drawtext=text=\&#39;&#39; + frame_text + &#39;\&#39;:fontsize=20&#39;
+            &#39;:x=810:y=260,crop=500:500:800:250&#39;,
+            str(video_out)], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.stack_h"><code class="name flex">
+<span>def <span class="ident">stack_h</span></span>(<span>self, video_left=None, video_right=None, video_out=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>stack videos horizontally</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stack_h(self, video_left=None, video_right=None, video_out=None):
+    &#34;&#34;&#34; stack videos horizontally &#34;&#34;&#34;
+    if video_left is None:
+        video_left = Path(self.root_dir, &#39;shared&#39;,
+                          &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
+    if video_right is None:
+        video_right = Path(self.root_dir, &#39;shared&#39;, &#39;identity_removed&#39;,
+                           &#39;obama2s.ir_painted_t.mp4&#39;)
+    if video_out is None:
+        video_out = Path(self.root_dir, &#39;video&#39;,
+                         Path(Path(video_left).name + &#39;comp_h.mp4&#39;))
+    Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+    sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_left), &#39;-i&#39;,
+            str(video_right), &#39;-filter_complex&#39;,
+            &#39;hstack=inputs=2&#39;, &#39;-y&#39;,
+            str(video_out)], check=True)</code></pre>
+</details>
+</dd>
+<dt id="replication.Video.stack_v"><code class="name flex">
+<span>def <span class="ident">stack_v</span></span>(<span>self, video_top=None, video_bottom=None, video_out=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>stack videos vertically</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stack_v(self, video_top=None, video_bottom=None, video_out=None):
+    &#34;&#34;&#34; stack videos vertically &#34;&#34;&#34;
+    if video_top is None:
+        video_top = Path(self.root_dir, &#39;shared&#39;,
+                         &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
+    if video_bottom is None:
+        video_bottom = Path(self.root_dir, &#39;shared&#39;, &#39;identity_removed&#39;,
+                            &#39;obama2s.ir_painted_t.mp4&#39;)
+    if video_out is None:
+        video_out = Path(self.root_dir, &#39;video&#39;,
+                         Path(Path(video_top).name + &#39;comp_v.mp4&#39;))
+    Path(video_out).parent.mkdir(parents=True, exist_ok=True)
+
+    sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_top), &#39;-i&#39;,
+            str(video_bottom), &#39;-filter_complex&#39;,
+            &#39;vstack=inputs=2&#39;, &#39;-y&#39;,
+            str(video_out)], check=True)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="replication.Analysis" href="#replication.Analysis">Analysis</a></code></h4>
+<ul class="">
+<li><code><a title="replication.Analysis.calc_rmse" href="#replication.Analysis.calc_rmse">calc_rmse</a></code></li>
+<li><code><a title="replication.Analysis.data_proc" href="#replication.Analysis.data_proc">data_proc</a></code></li>
+<li><code><a title="replication.Analysis.root_dir" href="#replication.Analysis.root_dir">root_dir</a></code></li>
+<li><code><a title="replication.Analysis.video" href="#replication.Analysis.video">video</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="replication.DataProcess" href="#replication.DataProcess">DataProcess</a></code></h4>
+<ul class="">
+<li><code><a title="replication.DataProcess.dlib_proc" href="#replication.DataProcess.dlib_proc">dlib_proc</a></code></li>
+<li><code><a title="replication.DataProcess.get_closed_mouth_frame" href="#replication.DataProcess.get_closed_mouth_frame">get_closed_mouth_frame</a></code></li>
+<li><code><a title="replication.DataProcess.get_procrustes" href="#replication.DataProcess.get_procrustes">get_procrustes</a></code></li>
+<li><code><a title="replication.DataProcess.interpolate_lmarks" href="#replication.DataProcess.interpolate_lmarks">interpolate_lmarks</a></code></li>
+<li><code><a title="replication.DataProcess.remove_identity" href="#replication.DataProcess.remove_identity">remove_identity</a></code></li>
+<li><code><a title="replication.DataProcess.video_file" href="#replication.DataProcess.video_file">video_file</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="replication.DlibProcess" href="#replication.DlibProcess">DlibProcess</a></code></h4>
+<ul class="two-column">
+<li><code><a title="replication.DlibProcess.detector" href="#replication.DlibProcess.detector">detector</a></code></li>
+<li><code><a title="replication.DlibProcess.display_overlay" href="#replication.DlibProcess.display_overlay">display_overlay</a></code></li>
+<li><code><a title="replication.DlibProcess.frame_num" href="#replication.DlibProcess.frame_num">frame_num</a></code></li>
+<li><code><a title="replication.DlibProcess.frames" href="#replication.DlibProcess.frames">frames</a></code></li>
+<li><code><a title="replication.DlibProcess.get_all_lmarks" href="#replication.DlibProcess.get_all_lmarks">get_all_lmarks</a></code></li>
+<li><code><a title="replication.DlibProcess.get_lmarks" href="#replication.DlibProcess.get_lmarks">get_lmarks</a></code></li>
+<li><code><a title="replication.DlibProcess.get_shape" href="#replication.DlibProcess.get_shape">get_shape</a></code></li>
+<li><code><a title="replication.DlibProcess.lmarks" href="#replication.DlibProcess.lmarks">lmarks</a></code></li>
+<li><code><a title="replication.DlibProcess.lmarks_file" href="#replication.DlibProcess.lmarks_file">lmarks_file</a></code></li>
+<li><code><a title="replication.DlibProcess.predictor" href="#replication.DlibProcess.predictor">predictor</a></code></li>
+<li><code><a title="replication.DlibProcess.rgb_image" href="#replication.DlibProcess.rgb_image">rgb_image</a></code></li>
+<li><code><a title="replication.DlibProcess.shape" href="#replication.DlibProcess.shape">shape</a></code></li>
+<li><code><a title="replication.DlibProcess.video_file" href="#replication.DlibProcess.video_file">video_file</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="replication.Draw" href="#replication.Draw">Draw</a></code></h4>
+<ul class="two-column">
+<li><code><a title="replication.Draw.annotate" href="#replication.Draw.annotate">annotate</a></code></li>
+<li><code><a title="replication.Draw.axes" href="#replication.Draw.axes">axes</a></code></li>
+<li><code><a title="replication.Draw.bounds" href="#replication.Draw.bounds">bounds</a></code></li>
+<li><code><a title="replication.Draw.calc_mean" href="#replication.Draw.calc_mean">calc_mean</a></code></li>
+<li><code><a title="replication.Draw.data_proc" href="#replication.Draw.data_proc">data_proc</a></code></li>
+<li><code><a title="replication.Draw.dimensions" href="#replication.Draw.dimensions">dimensions</a></code></li>
+<li><code><a title="replication.Draw.frames" href="#replication.Draw.frames">frames</a></code></li>
+<li><code><a title="replication.Draw.plots_dir" href="#replication.Draw.plots_dir">plots_dir</a></code></li>
+<li><code><a title="replication.Draw.save_plots" href="#replication.Draw.save_plots">save_plots</a></code></li>
+<li><code><a title="replication.Draw.save_plots_proc" href="#replication.Draw.save_plots_proc">save_plots_proc</a></code></li>
+<li><code><a title="replication.Draw.save_scatter" href="#replication.Draw.save_scatter">save_scatter</a></code></li>
+<li><code><a title="replication.Draw.save_scatter_frame" href="#replication.Draw.save_scatter_frame">save_scatter_frame</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="replication.Frames" href="#replication.Frames">Frames</a></code></h4>
+<ul class="">
+<li><code><a title="replication.Frames.frames_dir" href="#replication.Frames.frames_dir">frames_dir</a></code></li>
+<li><code><a title="replication.Frames.get_file_path" href="#replication.Frames.get_file_path">get_file_path</a></code></li>
+<li><code><a title="replication.Frames.get_frame_file_names" href="#replication.Frames.get_frame_file_names">get_frame_file_names</a></code></li>
+<li><code><a title="replication.Frames.get_frame_nums" href="#replication.Frames.get_frame_nums">get_frame_nums</a></code></li>
+<li><code><a title="replication.Frames.num_len" href="#replication.Frames.num_len">num_len</a></code></li>
+<li><code><a title="replication.Frames.root_dir" href="#replication.Frames.root_dir">root_dir</a></code></li>
+<li><code><a title="replication.Frames.suffix" href="#replication.Frames.suffix">suffix</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="replication.Video" href="#replication.Video">Video</a></code></h4>
+<ul class="">
+<li><code><a title="replication.Video.create_video" href="#replication.Video.create_video">create_video</a></code></li>
+<li><code><a title="replication.Video.draw_text" href="#replication.Video.draw_text">draw_text</a></code></li>
+<li><code><a title="replication.Video.extract_audio" href="#replication.Video.extract_audio">extract_audio</a></code></li>
+<li><code><a title="replication.Video.extract_frames" href="#replication.Video.extract_frames">extract_frames</a></code></li>
+<li><code><a title="replication.Video.frames" href="#replication.Video.frames">frames</a></code></li>
+<li><code><a title="replication.Video.prepare_anims" href="#replication.Video.prepare_anims">prepare_anims</a></code></li>
+<li><code><a title="replication.Video.prepare_ground_truth" href="#replication.Video.prepare_ground_truth">prepare_ground_truth</a></code></li>
+<li><code><a title="replication.Video.root_dir" href="#replication.Video.root_dir">root_dir</a></code></li>
+<li><code><a title="replication.Video.stack_h" href="#replication.Video.stack_h">stack_h</a></code></li>
+<li><code><a title="replication.Video.stack_v" href="#replication.Video.stack_v">stack_v</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
