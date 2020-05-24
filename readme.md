@@ -33,7 +33,7 @@ Load landmarks from an external files in `replic/shared/identity_removed/` and g
 
 ## code/replication.py
 
-Eskimez et al. released pre-trained models and the generation script with the express aim of promoting scientific reproducibility; however the tools for achieving this were not included. The [replication toolkit](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) is an attempt to fill this gap. The [API documentation](replic/shared/replication.html) is generated automatically by [pdoc](https://pdoc3.github.io/pdoc/)
+Eskimez et al. released pre-trained models and the generation script with the express aim of promoting scientific reproducibility; however the tools for achieving this were not included. The [replication toolkit](https://github.com/shanemcandrewai/Speech-to-Facial-Landmarks/blob/master/code/replication.py) is an attempt to fill this gap. The [API documentation](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/) is generated automatically by [pdoc](https://pdoc3.github.io/pdoc/)
 ### Differences and Interpretations of the original paper
 #### Face Landmark Identity Removal
 Eskimez et al. noted that even after applying [procrustes analysis](https://link.springer.com/article/10.1007/BF02291478), there was still a significant correlation between the aligned landmarks and the facial characteristics of the individual speaker. The goal is to minimise these so that the neural network can learn the relationship between speech and facial landmarks regardless of the speaker's identity. Eskimez et al. select a reference frame with a closed mouth and then calculate the differences between this and the corresponding landmarks resulting from procrustes analysis. This reference is calculated based on the distance between the upper and lower lip coordinates.  However this simple calculation can result in reference frames which are far from average such as a frame where the speaker has [pursed lips](replic/shared/obpursed.jpg)
@@ -42,7 +42,7 @@ In order to avoid this problem, the calculation was [enhanced](code/replication.
 
 Next a template face is calculated based the average of all the closed mouth references measured across all identities. The differences between each frame and the selected reference frame for the particular speaker are calculated and added to the template face.
 
-### [class Video](replic/shared/replication.html#replication.Video):
+### [class Video](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Video):
 Manages frame extraction and video manipulation using [FFmpeg](https://www.ffmpeg.org/)
 #### Example usage : extract_frames(video_in, start_number, quality)
 Extract frames from `replic/shared/obama2s.mp4` into `replic/frames/`
