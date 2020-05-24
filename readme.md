@@ -93,7 +93,7 @@ Data extraction and analysis
 #### [method calc_rmse](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Analysis.calc_rmse) example usage :
 Extract audio from `replic/shared/obama2s.mp4` and use the pre-trained model to predict landmarks. Extract landmarks from the video, preprocess and calculate the root mean square error """
 
-    python -c "from replication import *; Analysis().calc_rmse('../replic/shared/obama2s.npy')
+    python -c "from replication import *; Analysis().calc_rmse('../replic/shared/obama2s.mp4')"
 ## [code/test_utils.py](code/test_utils.py)
 ### function readme_test
 Extract examples from this readme and execute them sequentially
