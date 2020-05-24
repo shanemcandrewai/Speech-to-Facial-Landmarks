@@ -77,18 +77,24 @@ Calculations and supporting methods required for the replication of experiments
 #### [method get_closed_mouth_frame](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DataProcess.get_closed_mouth_frame) example usage :
 First calculate the width of the lips in each frame and filter out outliers. From those remaining, select the one with the lowest distance between the upper and low lips.
 
-    python -c "from replication import *; print(DataProcess(DlibProcess('../replic/shared/obama2s.npy')).get_closed_mouth_frame())"
+    python -c "from replication import *; print(DataProcess('../replic/shared/obama2s.mp4').get_closed_mouth_frame())"
 #### [method remove_identity](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.DataProcess.remove_identity) example usage :
 Following the specification described in the orginal paper, apply Procrustes analysis to the extracted landmarks `replic/shared/obama2s.npy`, reduce the frame rate to 25 fps, subtract the closed mouth frame and add to the template face. Save the resulting landmarks to `replic/data/obama2s.ir.npy`
 
-    python -c "from replication import *; print(DataProcess(DlibProcess('../replic/shared/obama2s.npy')).remove_identity(id_removed_file = '../replic/data/obama2s.ir.npy'))"
+    python -c "from replication import *; print(DataProcess(dlib_proc=DlibProcess(lmarks_file='../replic/shared/obama2s.npy')).remove_identity(id_removed_file = '../replic/data/obama2s.ir.npy'))"
 ### [class Draw](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw):
 Manages plotting, annoting, saving of landmarks using [Matplotlib](https://matplotlib.org/)
 #### [method save_plots_proc](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Draw.save_plots_proc) example usage :
 Use procrustes analysis to align and normalise landmarks, plot and save them with annotations in `replic/plots/`
 
-    python -c "from replication import *; Draw('../replic/plots/', DataProcess(DlibProcess('../replic/shared/obama2s.npy'))).save_plots_proc(annot=True)"
-## code/test_utils.py
+    python -c "from replication import *; Draw('../replic/plots/', DataProcess(dlib_proc=DlibProcess(lmarks_file='../replic/shared/obama2s.npy'))).save_plots_proc(annot=True)"
+### [class Analysis](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Analysis):
+Data extraction and analysis 
+#### [method calc_rmse](https://shanemcandrewai.github.io/Speech-to-Facial-Landmarks/#replication.Analysis.calc_rmse) example usage :
+Extract audio from `replic/shared/obama2s.mp4` and use the pre-trained model to predict landmarks. Extract landmarks from the video, preprocess and calculate the root mean square error """
+
+    python -c "from replication import *; Analysis().calc_rmse('../replic/shared/obama2s.npy')
+## [code/test_utils.py](code/test_utils.py)
 ### function readme_test
 Extract examples from this readme and execute them sequentially
 #### Example usage

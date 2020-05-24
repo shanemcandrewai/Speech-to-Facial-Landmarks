@@ -78,13 +78,19 @@ class DlibProcess:
     frame_num = None
     &#34;&#34;&#34; Frame sequence number &#34;&#34;&#34;
     shape = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor &#34;&#34;&#34;
     detector = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=get_frontal_face_detector#dlib.get_frontal_face_detector &#34;&#34;&#34;
     predictor = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor &#34;&#34;&#34;
     frames = None
     &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
     lmarks = np.empty((0, 68, 2))
+    &#34;&#34;&#34; [ndarray](https://numpy.org/doc/1.18/reference/generated/numpy.ndarray.html?highlight=ndarray#numpy.ndarray) containing facial landmarks &#34;&#34;&#34;
     lmarks_file = None
+    &#34;&#34;&#34; Landmarks file &#34;&#34;&#34;
     video_file = None
+    &#34;&#34;&#34; Input video file &#34;&#34;&#34;
 
     def __init__(self, video_file=None, lmarks_file=None, frames=None,
                  model_url=&#39;https://raw.github.com/davisking/dlib-models/master/&#39;
@@ -96,7 +102,7 @@ class DlibProcess:
             type(self).frames = frames
 
         if video_file is None:
-            type(self).video_file = Path(self.frames.root_dir, &#39;shared&#39;, &#39;obama2s.npy&#39;)
+            type(self).video_file = Path(self.frames.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
         else:
             type(self).video_file = Path(video_file)
 
@@ -165,7 +171,9 @@ class DlibProcess:
 class DataProcess:
     &#34;&#34;&#34; Calculations and supporting methods required for the replication of experiments &#34;&#34;&#34;
     dlib_proc = None
+    &#34;&#34;&#34; [DlibProcess](#replication.DlibProcess) &#34;&#34;&#34;
     video_file = None
+    &#34;&#34;&#34; Input video file &#34;&#34;&#34;
 
     def __init__(self, video_file=None, dlib_proc=None):
         if dlib_proc is None:
@@ -244,8 +252,11 @@ class DataProcess:
 class Draw:
     &#34;&#34;&#34; Draw landmarks with matplotlib &#34;&#34;&#34;
     data_proc = None
+    &#34;&#34;&#34; [DataProcess](#replication.DataProcess) &#34;&#34;&#34;
     plots_dir = None
+    &#34;&#34;&#34; Generated plots directory &#34;&#34;&#34;
     frames = None
+    &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
     dimensions = {&#39;width&#39;: 500, &#39;height&#39;: 500}
     axes = None
     bounds = {}
@@ -270,7 +281,7 @@ class Draw:
                              &#39;ymid&#39;: np.nanmean(lmarks[..., 1])}
 
     def _plot_features(self, lmarks, frame_num=0):
-        &#34;&#34;&#34; calculate and plot facial features &#34;&#34;&#34;
+        &#34;&#34;&#34; Calculate and plot facial features &#34;&#34;&#34;
         features = {&#39;jaw&#39;: lmarks[frame_num, :17],
                     &#39;eyebrow_r&#39;: lmarks[frame_num, 17:22],
                     &#39;eyebrow_l&#39;: lmarks[frame_num, 22:27],
@@ -350,7 +361,7 @@ class Draw:
         plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + &#39;.png&#39;))
 
     def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
-        &#34;&#34;&#34; save line plots &#34;&#34;&#34;
+        &#34;&#34;&#34; Save line plots &#34;&#34;&#34;
         _, self.axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
                                              self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
         if lmarks is None:
@@ -385,7 +396,7 @@ class Draw:
             self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
 
     def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
-        &#34;&#34;&#34; save line plots with Procrustes analysis &#34;&#34;&#34;
+        &#34;&#34;&#34; Save line plots with Procrustes analysis &#34;&#34;&#34;
         _, self.axes = plt.subplots(figsize=(
             self.dimensions[&#39;width&#39;]/dpi, self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
         lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
@@ -405,7 +416,9 @@ class Draw:
 class Video:
     &#34;&#34;&#34; FFmpeg video processing manager &#34;&#34;&#34;
     frames = None
+    &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
     root_dir = None
+    &#34;&#34;&#34; Toolkit working directory &#34;&#34;&#34;
 
     def __init__(self, frames=None, root_dir=None):
         if frames is None:
@@ -422,11 +435,12 @@ class Video:
         if video_in is None:
             video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
         if audio_file is None:
-            audio_file = Path(self.root_dir, &#39;audio&#39;,
+            audio_file = Path(self.root_dir, &#39;audio&#39;, Path(video_in).stem,
                               Path(video_in).with_suffix(&#39;.wav&#39;).name)
         Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
         sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in), &#39;-y&#39;,
                 str(audio_file)], check=True)
+        return Path(audio_file)
 
     def extract_frames(self, video_in=None, start_number=0, quality=5):
         &#34;&#34;&#34; Extract frames from video using FFmpeg &#34;&#34;&#34;
@@ -443,7 +457,7 @@ class Video:
 
     def create_video(self, video_out=None, plots_dir=None, framerate=25,
                      frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; create video from images &#34;&#34;&#34;
+        &#34;&#34;&#34; Create video from images &#34;&#34;&#34;
         if video_out is None:
             video_out = Path(self.root_dir, &#39;video&#39;, &#39;plots.mp4&#39;)
         Path(video_out).parent.mkdir(parents=True, exist_ok=True)
@@ -455,7 +469,7 @@ class Video:
                 str(video_out)], check=True)
 
     def stack_h(self, video_left=None, video_right=None, video_out=None):
-        &#34;&#34;&#34; stack videos horizontally &#34;&#34;&#34;
+        &#34;&#34;&#34; Stack videos horizontally &#34;&#34;&#34;
         if video_left is None:
             video_left = Path(self.root_dir, &#39;shared&#39;,
                               &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
@@ -473,7 +487,7 @@ class Video:
                 str(video_out)], check=True)
 
     def stack_v(self, video_top=None, video_bottom=None, video_out=None):
-        &#34;&#34;&#34; stack videos vertically &#34;&#34;&#34;
+        &#34;&#34;&#34; Stack videos vertically &#34;&#34;&#34;
         if video_top is None:
             video_top = Path(self.root_dir, &#39;shared&#39;,
                              &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
@@ -491,7 +505,7 @@ class Video:
                 str(video_out)], check=True)
 
     def draw_text(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; add text to video frames &#34;&#34;&#34;
+        &#34;&#34;&#34; Add text to video frames &#34;&#34;&#34;
         if video_in is None:
             video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
         if video_out is None:
@@ -504,7 +518,7 @@ class Video:
 
     def prepare_ground_truth(self, video_in=None, video_out=None,
                              frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
+        &#34;&#34;&#34; Adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
         if video_in is None:
             video_in = Path(self.root_dir, &#39;shared&#39;, &#39;080815_WeeklyAddress.mp4&#39;)
         if video_out is None:
@@ -518,7 +532,7 @@ class Video:
                 str(video_out)], check=True)
 
     def prepare_anims(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; scale down, crop and add text to the animations &#34;&#34;&#34;
+        &#34;&#34;&#34; Scale down, crop and add text to the animations &#34;&#34;&#34;
         if video_in is None:
             video_in = Path(self.root_dir, &#39;video&#39;, &#39;080815_WeeklyAddress_painted_.mp4&#39;)
         if video_out is None:
@@ -532,37 +546,38 @@ class Video:
 class Analysis:
     &#34;&#34;&#34; Data extraction and analysis &#34;&#34;&#34;
     data_proc = None
+    &#34;&#34;&#34; [DataProcess](#replication.DataProcess) &#34;&#34;&#34;
     video = None
+    &#34;&#34;&#34; [Video](#replication.Video) &#34;&#34;&#34;
     root_dir = None
+    &#34;&#34;&#34; Toolkit working directory &#34;&#34;&#34;
 
-    def __init__(self, data_proc=None, video=None):
-        if data_proc is None:
-            type(self).data_proc = DataProcess()
-        else:
-            type(self).data_proc = data_proc
+    def __init__(self, video=None):
         if video is None:
             type(self).video = Video()
         else:
             type(self).video = video
         type(self).root_dir = self.video.root_dir
 
-    def calc_rmse(self, pred_out=None, audio_file=None):
-        &#34;&#34;&#34; Save predicted landmarks from the pre-trained model tegether with
-        extracted landmarks pre-processed and animated &#34;&#34;&#34;
-        if pred_out is None:
-            pred_out = Path(self.root_dir, &#39;pred_out&#39;)
-        if audio_file is None:
-            audio_file = Path(self.root_dir, &#39;audio&#39;,
-                              Path(self.data_proc.dlib_proc.video_file).with_suffix(&#39;.wav&#39;).name)
+    def calc_rmse(self, video_file=None):
+        &#34;&#34;&#34; Extract audio from video and use the pre-trained model to predict landmarks
+        Extract landmarks from video, preprocess and calculate the root mean square error &#34;&#34;&#34;
+        if video_file is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = DataProcess(video_file)
         video_file = self.data_proc.dlib_proc.video_file
-        self.video.extract_audio(video_file, audio_file)
-        sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(Path(self.root_dir, &#39;audio&#39;)), &#39;-m&#39;,
-                &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;, str(pred_out), &#39;-s&#39;], check=True)
-        pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, &#39;predicted.npy&#39;))
+        audio_file = self.video.extract_audio(video_file)
+        sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(audio_file.parent),
+                &#39;-m&#39;, &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;,
+                str(Path(self.root_dir, &#39;pred_out&#39;)), &#39;-s&#39;], check=True)
+        pred_lmarks = np.load(str(Path(self.root_dir, &#39;pred_out&#39;, audio_file.name,
+                                       &#39;predicted.npy&#39;)))
         lmarks = self.data_proc.dlib_proc.get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
-        return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
-            (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
+        pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
+        return np.mean(((pred_lmarks_b - lmarks_ir)**2)[..., 0] + ((
+            pred_lmarks_b - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
 </details>
 </section>
 <section>
@@ -576,7 +591,7 @@ class Analysis:
 <dl>
 <dt id="replication.Analysis"><code class="flex name class">
 <span>class <span class="ident">Analysis</span></span>
-<span>(</span><span>data_proc=None, video=None)</span>
+<span>(</span><span>video=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Data extraction and analysis</p></div>
@@ -587,82 +602,85 @@ class Analysis:
 <pre><code class="python">class Analysis:
     &#34;&#34;&#34; Data extraction and analysis &#34;&#34;&#34;
     data_proc = None
+    &#34;&#34;&#34; [DataProcess](#replication.DataProcess) &#34;&#34;&#34;
     video = None
+    &#34;&#34;&#34; [Video](#replication.Video) &#34;&#34;&#34;
     root_dir = None
+    &#34;&#34;&#34; Toolkit working directory &#34;&#34;&#34;
 
-    def __init__(self, data_proc=None, video=None):
-        if data_proc is None:
-            type(self).data_proc = DataProcess()
-        else:
-            type(self).data_proc = data_proc
+    def __init__(self, video=None):
         if video is None:
             type(self).video = Video()
         else:
             type(self).video = video
         type(self).root_dir = self.video.root_dir
 
-    def calc_rmse(self, pred_out=None, audio_file=None):
-        &#34;&#34;&#34; Save predicted landmarks from the pre-trained model tegether with
-        extracted landmarks pre-processed and animated &#34;&#34;&#34;
-        if pred_out is None:
-            pred_out = Path(self.root_dir, &#39;pred_out&#39;)
-        if audio_file is None:
-            audio_file = Path(self.root_dir, &#39;audio&#39;,
-                              Path(self.data_proc.dlib_proc.video_file).with_suffix(&#39;.wav&#39;).name)
+    def calc_rmse(self, video_file=None):
+        &#34;&#34;&#34; Extract audio from video and use the pre-trained model to predict landmarks
+        Extract landmarks from video, preprocess and calculate the root mean square error &#34;&#34;&#34;
+        if video_file is None:
+            type(self).data_proc = DataProcess()
+        else:
+            type(self).data_proc = DataProcess(video_file)
         video_file = self.data_proc.dlib_proc.video_file
-        self.video.extract_audio(video_file, audio_file)
-        sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(Path(self.root_dir, &#39;audio&#39;)), &#39;-m&#39;,
-                &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;, str(pred_out), &#39;-s&#39;], check=True)
-        pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, &#39;predicted.npy&#39;))
+        audio_file = self.video.extract_audio(video_file)
+        sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(audio_file.parent),
+                &#39;-m&#39;, &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;,
+                str(Path(self.root_dir, &#39;pred_out&#39;)), &#39;-s&#39;], check=True)
+        pred_lmarks = np.load(str(Path(self.root_dir, &#39;pred_out&#39;, audio_file.name,
+                                       &#39;predicted.npy&#39;)))
         lmarks = self.data_proc.dlib_proc.get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
-        return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
-            (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
+        pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
+        return np.mean(((pred_lmarks_b - lmarks_ir)**2)[..., 0] + ((
+            pred_lmarks_b - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
 <dt id="replication.Analysis.data_proc"><code class="name">var <span class="ident">data_proc</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="#replication.DataProcess">DataProcess</a></p></div>
 </dd>
 <dt id="replication.Analysis.root_dir"><code class="name">var <span class="ident">root_dir</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Toolkit working directory</p></div>
 </dd>
 <dt id="replication.Analysis.video"><code class="name">var <span class="ident">video</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="#replication.Video">Video</a></p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
 <dt id="replication.Analysis.calc_rmse"><code class="name flex">
-<span>def <span class="ident">calc_rmse</span></span>(<span>self, pred_out=None, audio_file=None)</span>
+<span>def <span class="ident">calc_rmse</span></span>(<span>self, video_file=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Save predicted landmarks from the pre-trained model tegether with
-extracted landmarks pre-processed and animated</p></div>
+<div class="desc"><p>Extract audio from video and use the pre-trained model to predict landmarks
+Extract landmarks from video, preprocess and calculate the root mean square error</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def calc_rmse(self, pred_out=None, audio_file=None):
-    &#34;&#34;&#34; Save predicted landmarks from the pre-trained model tegether with
-    extracted landmarks pre-processed and animated &#34;&#34;&#34;
-    if pred_out is None:
-        pred_out = Path(self.root_dir, &#39;pred_out&#39;)
-    if audio_file is None:
-        audio_file = Path(self.root_dir, &#39;audio&#39;,
-                          Path(self.data_proc.dlib_proc.video_file).with_suffix(&#39;.wav&#39;).name)
+<pre><code class="python">def calc_rmse(self, video_file=None):
+    &#34;&#34;&#34; Extract audio from video and use the pre-trained model to predict landmarks
+    Extract landmarks from video, preprocess and calculate the root mean square error &#34;&#34;&#34;
+    if video_file is None:
+        type(self).data_proc = DataProcess()
+    else:
+        type(self).data_proc = DataProcess(video_file)
     video_file = self.data_proc.dlib_proc.video_file
-    self.video.extract_audio(video_file, audio_file)
-    sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(Path(self.root_dir, &#39;audio&#39;)), &#39;-m&#39;,
-            &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;, str(pred_out), &#39;-s&#39;], check=True)
-    pred_lmarks = np.load(Path(pred_out, Path(audio_file).name, &#39;predicted.npy&#39;))
+    audio_file = self.video.extract_audio(video_file)
+    sp.run([&#39;python&#39;, &#39;generate.py&#39;, &#39;-i&#39;, str(audio_file.parent),
+            &#39;-m&#39;, &#39;../pre_trained/1D_CNN.pt&#39;, &#39;-o&#39;,
+            str(Path(self.root_dir, &#39;pred_out&#39;)), &#39;-s&#39;], check=True)
+    pred_lmarks = np.load(str(Path(self.root_dir, &#39;pred_out&#39;, audio_file.name,
+                                   &#39;predicted.npy&#39;)))
     lmarks = self.data_proc.dlib_proc.get_all_lmarks()
     lmarks_ir = self.data_proc.remove_identity(lmarks)
-    return np.mean(((pred_lmarks - lmarks_ir)**2)[..., 0] + (
-        (pred_lmarks - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
+    pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
+    return np.mean(((pred_lmarks_b - lmarks_ir)**2)[..., 0] + ((
+        pred_lmarks_b - lmarks_ir)**2)[..., 1], 1)**0.5</code></pre>
 </details>
 </dd>
 </dl>
@@ -680,7 +698,9 @@ extracted landmarks pre-processed and animated</p></div>
 <pre><code class="python">class DataProcess:
     &#34;&#34;&#34; Calculations and supporting methods required for the replication of experiments &#34;&#34;&#34;
     dlib_proc = None
+    &#34;&#34;&#34; [DlibProcess](#replication.DlibProcess) &#34;&#34;&#34;
     video_file = None
+    &#34;&#34;&#34; Input video file &#34;&#34;&#34;
 
     def __init__(self, video_file=None, dlib_proc=None):
         if dlib_proc is None:
@@ -760,11 +780,11 @@ extracted landmarks pre-processed and animated</p></div>
 <dl>
 <dt id="replication.DataProcess.dlib_proc"><code class="name">var <span class="ident">dlib_proc</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="#replication.DlibProcess">DlibProcess</a></p></div>
 </dd>
 <dt id="replication.DataProcess.video_file"><code class="name">var <span class="ident">video_file</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Input video file</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -898,13 +918,19 @@ interpolation</p></div>
     frame_num = None
     &#34;&#34;&#34; Frame sequence number &#34;&#34;&#34;
     shape = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor &#34;&#34;&#34;
     detector = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=get_frontal_face_detector#dlib.get_frontal_face_detector &#34;&#34;&#34;
     predictor = None
+    &#34;&#34;&#34; http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor &#34;&#34;&#34;
     frames = None
     &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
     lmarks = np.empty((0, 68, 2))
+    &#34;&#34;&#34; [ndarray](https://numpy.org/doc/1.18/reference/generated/numpy.ndarray.html?highlight=ndarray#numpy.ndarray) containing facial landmarks &#34;&#34;&#34;
     lmarks_file = None
+    &#34;&#34;&#34; Landmarks file &#34;&#34;&#34;
     video_file = None
+    &#34;&#34;&#34; Input video file &#34;&#34;&#34;
 
     def __init__(self, video_file=None, lmarks_file=None, frames=None,
                  model_url=&#39;https://raw.github.com/davisking/dlib-models/master/&#39;
@@ -916,7 +942,7 @@ interpolation</p></div>
             type(self).frames = frames
 
         if video_file is None:
-            type(self).video_file = Path(self.frames.root_dir, &#39;shared&#39;, &#39;obama2s.npy&#39;)
+            type(self).video_file = Path(self.frames.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
         else:
             type(self).video_file = Path(video_file)
 
@@ -986,7 +1012,7 @@ interpolation</p></div>
 <dl>
 <dt id="replication.DlibProcess.detector"><code class="name">var <span class="ident">detector</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="http://dlib.net/python/index.html?highlight=get_frontal_face_detector#dlib.get_frontal_face_detector">http://dlib.net/python/index.html?highlight=get_frontal_face_detector#dlib.get_frontal_face_detector</a></p></div>
 </dd>
 <dt id="replication.DlibProcess.frame_num"><code class="name">var <span class="ident">frame_num</span></code></dt>
 <dd>
@@ -998,15 +1024,15 @@ interpolation</p></div>
 </dd>
 <dt id="replication.DlibProcess.lmarks"><code class="name">var <span class="ident">lmarks</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="https://numpy.org/doc/1.18/reference/generated/numpy.ndarray.html?highlight=ndarray#numpy.ndarray">ndarray</a> containing facial landmarks</p></div>
 </dd>
 <dt id="replication.DlibProcess.lmarks_file"><code class="name">var <span class="ident">lmarks_file</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Landmarks file</p></div>
 </dd>
 <dt id="replication.DlibProcess.predictor"><code class="name">var <span class="ident">predictor</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor">http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor</a></p></div>
 </dd>
 <dt id="replication.DlibProcess.rgb_image"><code class="name">var <span class="ident">rgb_image</span></code></dt>
 <dd>
@@ -1014,11 +1040,11 @@ interpolation</p></div>
 </dd>
 <dt id="replication.DlibProcess.shape"><code class="name">var <span class="ident">shape</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor">http://dlib.net/python/index.html?highlight=shape_predictor#dlib.shape_predictor</a></p></div>
 </dd>
 <dt id="replication.DlibProcess.video_file"><code class="name">var <span class="ident">video_file</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Input video file</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -1123,8 +1149,11 @@ interpolation</p></div>
 <pre><code class="python">class Draw:
     &#34;&#34;&#34; Draw landmarks with matplotlib &#34;&#34;&#34;
     data_proc = None
+    &#34;&#34;&#34; [DataProcess](#replication.DataProcess) &#34;&#34;&#34;
     plots_dir = None
+    &#34;&#34;&#34; Generated plots directory &#34;&#34;&#34;
     frames = None
+    &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
     dimensions = {&#39;width&#39;: 500, &#39;height&#39;: 500}
     axes = None
     bounds = {}
@@ -1149,7 +1178,7 @@ interpolation</p></div>
                              &#39;ymid&#39;: np.nanmean(lmarks[..., 1])}
 
     def _plot_features(self, lmarks, frame_num=0):
-        &#34;&#34;&#34; calculate and plot facial features &#34;&#34;&#34;
+        &#34;&#34;&#34; Calculate and plot facial features &#34;&#34;&#34;
         features = {&#39;jaw&#39;: lmarks[frame_num, :17],
                     &#39;eyebrow_r&#39;: lmarks[frame_num, 17:22],
                     &#39;eyebrow_l&#39;: lmarks[frame_num, 22:27],
@@ -1229,7 +1258,7 @@ interpolation</p></div>
         plt.savefig(Path(self.plots_dir, str(frame_num).zfill(self.frames.num_len) + &#39;.png&#39;))
 
     def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
-        &#34;&#34;&#34; save line plots &#34;&#34;&#34;
+        &#34;&#34;&#34; Save line plots &#34;&#34;&#34;
         _, self.axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
                                              self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
         if lmarks is None:
@@ -1264,7 +1293,7 @@ interpolation</p></div>
             self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
 
     def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
-        &#34;&#34;&#34; save line plots with Procrustes analysis &#34;&#34;&#34;
+        &#34;&#34;&#34; Save line plots with Procrustes analysis &#34;&#34;&#34;
         _, self.axes = plt.subplots(figsize=(
             self.dimensions[&#39;width&#39;]/dpi, self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
         lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
@@ -1293,7 +1322,7 @@ interpolation</p></div>
 </dd>
 <dt id="replication.Draw.data_proc"><code class="name">var <span class="ident">data_proc</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="#replication.DataProcess">DataProcess</a></p></div>
 </dd>
 <dt id="replication.Draw.dimensions"><code class="name">var <span class="ident">dimensions</span></code></dt>
 <dd>
@@ -1301,11 +1330,11 @@ interpolation</p></div>
 </dd>
 <dt id="replication.Draw.frames"><code class="name">var <span class="ident">frames</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="#replication.Frames">Frames</a></p></div>
 </dd>
 <dt id="replication.Draw.plots_dir"><code class="name">var <span class="ident">plots_dir</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Generated plots directory</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -1349,13 +1378,13 @@ interpolation</p></div>
 <span>def <span class="ident">save_plots</span></span>(<span>self, lmarks=None, with_frame=True, annot=False, dpi=96)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>save line plots</p></div>
+<div class="desc"><p>Save line plots</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def save_plots(self, lmarks=None, with_frame=True, annot=False, dpi=96):
-    &#34;&#34;&#34; save line plots &#34;&#34;&#34;
+    &#34;&#34;&#34; Save line plots &#34;&#34;&#34;
     _, self.axes = plt.subplots(figsize=(self.dimensions[&#39;width&#39;]/dpi,
                                          self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
     if lmarks is None:
@@ -1385,13 +1414,13 @@ interpolation</p></div>
 <span>def <span class="ident">save_plots_proc</span></span>(<span>self, dpi=96, annot=False, lips_only=False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>save line plots with Procrustes analysis</p></div>
+<div class="desc"><p>Save line plots with Procrustes analysis</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
-    &#34;&#34;&#34; save line plots with Procrustes analysis &#34;&#34;&#34;
+    &#34;&#34;&#34; Save line plots with Procrustes analysis &#34;&#34;&#34;
     _, self.axes = plt.subplots(figsize=(
         self.dimensions[&#39;width&#39;]/dpi, self.dimensions[&#39;height&#39;]/dpi), dpi=dpi)
     lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
@@ -1597,7 +1626,9 @@ interpolation</p></div>
 <pre><code class="python">class Video:
     &#34;&#34;&#34; FFmpeg video processing manager &#34;&#34;&#34;
     frames = None
+    &#34;&#34;&#34; [Frames](#replication.Frames) &#34;&#34;&#34;
     root_dir = None
+    &#34;&#34;&#34; Toolkit working directory &#34;&#34;&#34;
 
     def __init__(self, frames=None, root_dir=None):
         if frames is None:
@@ -1614,11 +1645,12 @@ interpolation</p></div>
         if video_in is None:
             video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
         if audio_file is None:
-            audio_file = Path(self.root_dir, &#39;audio&#39;,
+            audio_file = Path(self.root_dir, &#39;audio&#39;, Path(video_in).stem,
                               Path(video_in).with_suffix(&#39;.wav&#39;).name)
         Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
         sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in), &#39;-y&#39;,
                 str(audio_file)], check=True)
+        return Path(audio_file)
 
     def extract_frames(self, video_in=None, start_number=0, quality=5):
         &#34;&#34;&#34; Extract frames from video using FFmpeg &#34;&#34;&#34;
@@ -1635,7 +1667,7 @@ interpolation</p></div>
 
     def create_video(self, video_out=None, plots_dir=None, framerate=25,
                      frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; create video from images &#34;&#34;&#34;
+        &#34;&#34;&#34; Create video from images &#34;&#34;&#34;
         if video_out is None:
             video_out = Path(self.root_dir, &#39;video&#39;, &#39;plots.mp4&#39;)
         Path(video_out).parent.mkdir(parents=True, exist_ok=True)
@@ -1647,7 +1679,7 @@ interpolation</p></div>
                 str(video_out)], check=True)
 
     def stack_h(self, video_left=None, video_right=None, video_out=None):
-        &#34;&#34;&#34; stack videos horizontally &#34;&#34;&#34;
+        &#34;&#34;&#34; Stack videos horizontally &#34;&#34;&#34;
         if video_left is None:
             video_left = Path(self.root_dir, &#39;shared&#39;,
                               &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
@@ -1665,7 +1697,7 @@ interpolation</p></div>
                 str(video_out)], check=True)
 
     def stack_v(self, video_top=None, video_bottom=None, video_out=None):
-        &#34;&#34;&#34; stack videos vertically &#34;&#34;&#34;
+        &#34;&#34;&#34; Stack videos vertically &#34;&#34;&#34;
         if video_top is None:
             video_top = Path(self.root_dir, &#39;shared&#39;,
                              &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
@@ -1683,7 +1715,7 @@ interpolation</p></div>
                 str(video_out)], check=True)
 
     def draw_text(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; add text to video frames &#34;&#34;&#34;
+        &#34;&#34;&#34; Add text to video frames &#34;&#34;&#34;
         if video_in is None:
             video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
         if video_out is None:
@@ -1696,7 +1728,7 @@ interpolation</p></div>
 
     def prepare_ground_truth(self, video_in=None, video_out=None,
                              frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
+        &#34;&#34;&#34; Adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
         if video_in is None:
             video_in = Path(self.root_dir, &#39;shared&#39;, &#39;080815_WeeklyAddress.mp4&#39;)
         if video_out is None:
@@ -1710,7 +1742,7 @@ interpolation</p></div>
                 str(video_out)], check=True)
 
     def prepare_anims(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-        &#34;&#34;&#34; scale down, crop and add text to the animations &#34;&#34;&#34;
+        &#34;&#34;&#34; Scale down, crop and add text to the animations &#34;&#34;&#34;
         if video_in is None:
             video_in = Path(self.root_dir, &#39;video&#39;, &#39;080815_WeeklyAddress_painted_.mp4&#39;)
         if video_out is None:
@@ -1725,11 +1757,11 @@ interpolation</p></div>
 <dl>
 <dt id="replication.Video.frames"><code class="name">var <span class="ident">frames</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="#replication.Frames">Frames</a></p></div>
 </dd>
 <dt id="replication.Video.root_dir"><code class="name">var <span class="ident">root_dir</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Toolkit working directory</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -1738,14 +1770,14 @@ interpolation</p></div>
 <span>def <span class="ident">create_video</span></span>(<span>self, video_out=None, plots_dir=None, framerate=25, frame_text='frame %{frame_num} %{pts}')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>create video from images</p></div>
+<div class="desc"><p>Create video from images</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def create_video(self, video_out=None, plots_dir=None, framerate=25,
                  frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-    &#34;&#34;&#34; create video from images &#34;&#34;&#34;
+    &#34;&#34;&#34; Create video from images &#34;&#34;&#34;
     if video_out is None:
         video_out = Path(self.root_dir, &#39;video&#39;, &#39;plots.mp4&#39;)
     Path(video_out).parent.mkdir(parents=True, exist_ok=True)
@@ -1761,13 +1793,13 @@ interpolation</p></div>
 <span>def <span class="ident">draw_text</span></span>(<span>self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>add text to video frames</p></div>
+<div class="desc"><p>Add text to video frames</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def draw_text(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-    &#34;&#34;&#34; add text to video frames &#34;&#34;&#34;
+    &#34;&#34;&#34; Add text to video frames &#34;&#34;&#34;
     if video_in is None:
         video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
     if video_out is None:
@@ -1793,11 +1825,12 @@ interpolation</p></div>
     if video_in is None:
         video_in = Path(self.root_dir, &#39;shared&#39;, &#39;obama2s.mp4&#39;)
     if audio_file is None:
-        audio_file = Path(self.root_dir, &#39;audio&#39;,
+        audio_file = Path(self.root_dir, &#39;audio&#39;, Path(video_in).stem,
                           Path(video_in).with_suffix(&#39;.wav&#39;).name)
     Path(audio_file).parent.mkdir(parents=True, exist_ok=True)
     sp.run([&#39;ffmpeg&#39;, &#39;-i&#39;, str(video_in), &#39;-y&#39;,
-            str(audio_file)], check=True)</code></pre>
+            str(audio_file)], check=True)
+    return Path(audio_file)</code></pre>
 </details>
 </dd>
 <dt id="replication.Video.extract_frames"><code class="name flex">
@@ -1827,13 +1860,13 @@ interpolation</p></div>
 <span>def <span class="ident">prepare_anims</span></span>(<span>self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>scale down, crop and add text to the animations</p></div>
+<div class="desc"><p>Scale down, crop and add text to the animations</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def prepare_anims(self, video_in=None, video_out=None, frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-    &#34;&#34;&#34; scale down, crop and add text to the animations &#34;&#34;&#34;
+    &#34;&#34;&#34; Scale down, crop and add text to the animations &#34;&#34;&#34;
     if video_in is None:
         video_in = Path(self.root_dir, &#39;video&#39;, &#39;080815_WeeklyAddress_painted_.mp4&#39;)
     if video_out is None:
@@ -1849,14 +1882,14 @@ interpolation</p></div>
 <span>def <span class="ident">prepare_ground_truth</span></span>(<span>self, video_in=None, video_out=None, frame_text='frame %{frame_num} %{pts}')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>adjust the framerate to 25fps, crop and add text to the source video</p></div>
+<div class="desc"><p>Adjust the framerate to 25fps, crop and add text to the source video</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def prepare_ground_truth(self, video_in=None, video_out=None,
                          frame_text=&#39;frame %{frame_num} %{pts}&#39;):
-    &#34;&#34;&#34; adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
+    &#34;&#34;&#34; Adjust the framerate to 25fps, crop and add text to the source video &#34;&#34;&#34;
     if video_in is None:
         video_in = Path(self.root_dir, &#39;shared&#39;, &#39;080815_WeeklyAddress.mp4&#39;)
     if video_out is None:
@@ -1874,13 +1907,13 @@ interpolation</p></div>
 <span>def <span class="ident">stack_h</span></span>(<span>self, video_left=None, video_right=None, video_out=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>stack videos horizontally</p></div>
+<div class="desc"><p>Stack videos horizontally</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def stack_h(self, video_left=None, video_right=None, video_out=None):
-    &#34;&#34;&#34; stack videos horizontally &#34;&#34;&#34;
+    &#34;&#34;&#34; Stack videos horizontally &#34;&#34;&#34;
     if video_left is None:
         video_left = Path(self.root_dir, &#39;shared&#39;,
                           &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
@@ -1902,13 +1935,13 @@ interpolation</p></div>
 <span>def <span class="ident">stack_v</span></span>(<span>self, video_top=None, video_bottom=None, video_out=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>stack videos vertically</p></div>
+<div class="desc"><p>Stack videos vertically</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def stack_v(self, video_top=None, video_bottom=None, video_out=None):
-    &#34;&#34;&#34; stack videos vertically &#34;&#34;&#34;
+    &#34;&#34;&#34; Stack videos vertically &#34;&#34;&#34;
     if video_top is None:
         video_top = Path(self.root_dir, &#39;shared&#39;,
                          &#39;obama2s&#39;, &#39;obama2s_painted_t.mp4&#39;)
