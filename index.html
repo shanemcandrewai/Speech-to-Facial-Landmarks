@@ -562,7 +562,13 @@ class Analysis:
     def calc_rmse(self, video_file=None, python_exe=&#39;python&#39;, mouth_only=True,
                   scale_width=True):
         &#34;&#34;&#34; Extract audio from video and use the pre-trained model to predict landmarks
-        Extract landmarks from video, preprocess and calculate the root mean square error &#34;&#34;&#34;
+        Extract landmarks from video, preprocess and calculate the root mean square error
+        Keyword arguments:
+        video_file -- input video (default ../replic/shared/obama2s.mp4)
+        python_exe -- python executable (default python)
+        mouth_only -- calcuate the RMSE over only the mouth landmarks (default True)
+        scale_width -- scale the lmarkmarks to make the face width approx 1 (default True
+        &#34;&#34;&#34;
         if video_file is None:
             type(self).data_proc = DataProcess()
         else:
@@ -629,7 +635,13 @@ class Analysis:
     def calc_rmse(self, video_file=None, python_exe=&#39;python&#39;, mouth_only=True,
                   scale_width=True):
         &#34;&#34;&#34; Extract audio from video and use the pre-trained model to predict landmarks
-        Extract landmarks from video, preprocess and calculate the root mean square error &#34;&#34;&#34;
+        Extract landmarks from video, preprocess and calculate the root mean square error
+        Keyword arguments:
+        video_file -- input video (default ../replic/shared/obama2s.mp4)
+        python_exe -- python executable (default python)
+        mouth_only -- calcuate the RMSE over only the mouth landmarks (default True)
+        scale_width -- scale the lmarkmarks to make the face width approx 1 (default True
+        &#34;&#34;&#34;
         if video_file is None:
             type(self).data_proc = DataProcess()
         else:
@@ -679,7 +691,12 @@ class Analysis:
 </code></dt>
 <dd>
 <div class="desc"><p>Extract audio from video and use the pre-trained model to predict landmarks
-Extract landmarks from video, preprocess and calculate the root mean square error</p></div>
+Extract landmarks from video, preprocess and calculate the root mean square error
+Keyword arguments:
+video_file &ndash; input video (default ../replic/shared/obama2s.mp4)
+python_exe &ndash; python executable (default python)
+mouth_only &ndash; calcuate the RMSE over only the mouth landmarks (default True)
+scale_width &ndash; scale the lmarkmarks to make the face width approx 1 (default True</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -687,7 +704,13 @@ Extract landmarks from video, preprocess and calculate the root mean square erro
 <pre><code class="python">def calc_rmse(self, video_file=None, python_exe=&#39;python&#39;, mouth_only=True,
               scale_width=True):
     &#34;&#34;&#34; Extract audio from video and use the pre-trained model to predict landmarks
-    Extract landmarks from video, preprocess and calculate the root mean square error &#34;&#34;&#34;
+    Extract landmarks from video, preprocess and calculate the root mean square error
+    Keyword arguments:
+    video_file -- input video (default ../replic/shared/obama2s.mp4)
+    python_exe -- python executable (default python)
+    mouth_only -- calcuate the RMSE over only the mouth landmarks (default True)
+    scale_width -- scale the lmarkmarks to make the face width approx 1 (default True
+    &#34;&#34;&#34;
     if video_file is None:
         type(self).data_proc = DataProcess()
     else:
