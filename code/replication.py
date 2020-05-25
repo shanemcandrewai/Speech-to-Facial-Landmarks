@@ -155,11 +155,11 @@ class DataProcess:
             type(self).dlib_proc = dlib_proc
         type(self).video_file = self.dlib_proc.video_file
 
-    def get_procrustes(self, lmarks=None, lips_only=False):
+    def get_procrustes(self, lmarks=None, mouth_only=False):
         """ Procrustes analysis - return landmarks best fit to mean landmarks """
         if lmarks is None:
             lmarks = self.dlib_proc.get_all_lmarks()
-        if lips_only:
+        if mouth_only:
             lmarks = lmarks[:, 48:, :]
         mean_lmarks = np.nanmean(lmarks, 0, keepdims=True)
         proc_lmarks = np.full(lmarks.shape, np.nan)
@@ -167,7 +167,7 @@ class DataProcess:
             if ~np.isnan(lmarks[frame_num, 0, 0]):
                 _, proc_lmarks[frame_num], _ = procrustes(
                     mean_lmarks[0], lmarks[frame_num])
-        if lips_only:
+        if mouth_only:
             not_lips = np.full((proc_lmarks.shape[0], proc_lmarks.shape[1],
                                 48, proc_lmarks.shape[3]), np.nan)
             proc_lmarks = np.concatenate((not_lips, proc_lmarks), 2)
@@ -206,16 +206,16 @@ class DataProcess:
             lmarks_filtered, lip_bottom], axis=2)
         return lmarks_filtered[0][np.argmin(np.sum(lip_dist, -1)[0])]
 
-    def remove_identity(self, lmarks=None, template=None, id_removed_file=None,
+    def remove_identity(self, lmarks=None, template_file=None, id_removed_file=None,
                         zscore=0.1):
         """ current frame - the closed mouth frame + template """
         if lmarks is None:
             lmarks = self.get_procrustes()
-        if template is None:
-            template = Path('..', 'data', 'mean.npy')
+        if template_file is None:
+            template_file = Path('..', 'data', 'mean.npy')
         lmarks = self.interpolate_lmarks().reshape((-1, 68, 2))
         closed_mouth = lmarks[self.get_closed_mouth_frame(lmarks=lmarks, zscore=zscore)]
-        template_2d = np.load(str(template))[:, :2]
+        template_2d = np.load(str(template_file))[:, :2]
         identity_removed = lmarks - closed_mouth + template_2d
         if id_removed_file is not None:
             Path(id_removed_file).parent.mkdir(parents=True, exist_ok=True)
@@ -368,11 +368,11 @@ class Draw:
                 lmarks[frame_num]):
             self.axes.annotate(str(lmark_num+1), xy=(point_x, point_y))
 
-    def save_plots_proc(self, dpi=96, annot=False, lips_only=False):
+    def save_plots_proc(self, dpi=96, annot=False, mouth_only=False):
         """ Save line plots with Procrustes analysis """
         _, self.axes = plt.subplots(figsize=(
             self.dimensions['width']/dpi, self.dimensions['height']/dpi), dpi=dpi)
-        lmarks = self.data_proc.get_procrustes(lips_only=lips_only)
+        lmarks = self.data_proc.get_procrustes(mouth_only=mouth_only)
         if self.plots_dir.is_dir():
             shutil.rmtree(self.plots_dir)
         self.plots_dir.mkdir(parents=True, exist_ok=True)
@@ -532,7 +532,7 @@ class Analysis:
             type(self).video = video
         type(self).root_dir = self.video.root_dir
 
-    def calc_rmse(self, video_file=None):
+    def calc_rmse(self, video_file=None, python_exe='python', mouth_only=True):
         """ Extract audio from video and use the pre-trained model to predict landmarks
         Extract landmarks from video, preprocess and calculate the root mean square error """
         if video_file is None:
@@ -541,7 +541,7 @@ class Analysis:
             type(self).data_proc = DataProcess(video_file)
         video_file = self.data_proc.dlib_proc.video_file
         audio_file = self.video.extract_audio(video_file)
-        sp.run(['python', 'generate.py', '-i', str(audio_file.parent),
+        sp.run([python_exe, 'generate.py', '-i', str(audio_file.parent),
                 '-m', '../pre_trained/1D_CNN.pt', '-o',
                 str(Path(self.root_dir, 'pred_out')), '-s'], check=True)
         pred_lmarks = np.load(str(Path(self.root_dir, 'pred_out', audio_file.name,
@@ -549,5 +549,8 @@ class Analysis:
         lmarks = self.data_proc.dlib_proc.get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
         pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
+        if mouth_only:
+            lmarks_ir = lmarks_ir[:, 48:]
+            pred_lmarks_b = pred_lmarks_b[:, 48:]
         return np.mean(((pred_lmarks_b - lmarks_ir)**2)[..., 0] + ((
             pred_lmarks_b - lmarks_ir)**2)[..., 1], 1)**0.5
