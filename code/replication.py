@@ -532,9 +532,16 @@ class Analysis:
             type(self).video = video
         type(self).root_dir = self.video.root_dir
 
-    def calc_rmse(self, video_file=None, python_exe='python', mouth_only=True):
+    def calc_rmse(self, video_file=None, python_exe='python', mouth_only=True,
+                  scale_width=True):
         """ Extract audio from video and use the pre-trained model to predict landmarks
-        Extract landmarks from video, preprocess and calculate the root mean square error """
+        Extract landmarks from video, preprocess and calculate the root mean square error
+        Keyword arguments:
+        video_file -- input video (default ../replic/shared/obama2s.mp4)
+        python_exe -- python executable (default python)
+        mouth_only -- calcuate the RMSE over only the mouth landmarks (default True)
+        scale_width -- scale the lmarkmarks to make the face width approx 1 (default True
+        """
         if video_file is None:
             type(self).data_proc = DataProcess()
         else:
@@ -549,6 +556,13 @@ class Analysis:
         lmarks = self.data_proc.dlib_proc.get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
         pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
+        if scale_width:
+            scale = np.max([np.nanmax(lmarks_ir[..., 0]),
+                            np.max(pred_lmarks_b[..., 0]),
+                            np.abs(np.nanmin(lmarks_ir[..., 0])),
+                            np.abs(np.min(pred_lmarks_b[..., 0]))])
+            lmarks_ir /= scale
+            pred_lmarks_b /= scale
         if mouth_only:
             lmarks_ir = lmarks_ir[:, 48:]
             pred_lmarks_b = pred_lmarks_b[:, 48:]
