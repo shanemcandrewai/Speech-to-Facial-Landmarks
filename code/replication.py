@@ -565,12 +565,15 @@ class Analysis:
         lmarks_ir = self.data_proc.remove_identity(lmarks)
         pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
         if scale_width:
-            scale = np.max([np.nanmax(lmarks_ir[..., 0]),
-                            np.max(pred_lmarks_b[..., 0]),
-                            np.abs(np.nanmin(lmarks_ir[..., 0])),
-                            np.abs(np.min(pred_lmarks_b[..., 0]))])
-            lmarks_ir /= scale
-            pred_lmarks_b /= scale
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=RuntimeWarning)
+                width_ir = np.nanmean(np.nanmax(lmarks_ir[..., 0], 1) - np.nanmin(lmarks_ir[..., 0], 1))
+                width_b = np.nanmean(np.nanmax(pred_lmarks_b[..., 0], 1) - np.nanmin(
+                    pred_lmarks_b[..., 0], 1))
+            lmarks_ir[..., 0] += width_ir/2
+            pred_lmarks_b[..., 0] += width_b/2
+            lmarks_ir /= np.nanmax(lmarks_ir[..., 0])
+            pred_lmarks_b /= np.nanmax(pred_lmarks_b[..., 0])
         if mouth_only:
             lmarks_ir = lmarks_ir[:, 48:]
             pred_lmarks_b = pred_lmarks_b[:, 48:]
