@@ -38,7 +38,7 @@ Eskimez et al. released pre-trained models and the generation script with the ex
 #### Face Landmark Identity Removal
 Eskimez et al. noted that even after applying [procrustes analysis](https://link.springer.com/article/10.1007/BF02291478), there was still a significant correlation between the aligned landmarks and the facial characteristics of the individual speaker. The goal is to minimise these so that the neural network can learn the relationship between speech and facial landmarks regardless of the speaker's identity. Eskimez et al. select a reference frame with a closed mouth and then calculate the differences between this and the corresponding landmarks resulting from procrustes analysis. This reference is calculated based on the distance between the upper and lower lip coordinates.  However this simple calculation can result in reference frames which are far from average such as a frame where the speaker has [pursed lips](replic/shared/obpursed.jpg)
 
-In order to avoid this problem, the calculation was [enhanced](code/replication.py#L183) to exclude frames where the mouth is unusually wide or narrow.
+In order to avoid this problem, the calculation was [enhanced](code/replication.py#L191) to exclude frames where the mouth is unusually wide or narrow.
 
 Next a template face is calculated based the average of all the closed mouth references measured across all identities. The differences between each frame and the selected reference frame for the particular speaker are calculated and added to the template face.
 

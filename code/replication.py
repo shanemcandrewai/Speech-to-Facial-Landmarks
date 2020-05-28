@@ -533,7 +533,7 @@ class Analysis:
         type(self).root_dir = self.video.root_dir
 
     def calc_rmse(self, video_file=None, python_exe='python', mouth_only=True,
-                  scale_width=True):
+                  normalize=True, shuffle=False):
         """ First extract audio from video and use the pre-trained model 1D_CNN
         to predict landmarks.  Next extract landmarks from video using DLib,
         preprocess and calculate the root mean square error.
@@ -547,8 +547,9 @@ class Analysis:
         `mouth_only` -- calcuate the RMSE over only the mouth landmarks
         (default `True`)
 
-        `scale_width` -- scale the lmarkmarks to make the face width
-        approximately 1 (default `True`)
+        `normalize` -- normalize the lmarkmarks to between 0 and 1 (default `True`)
+
+        `shuffle` -- shuffle predicted frames (default `False`)
         """
         if video_file is None:
             type(self).data_proc = DataProcess()
@@ -564,7 +565,7 @@ class Analysis:
         lmarks = self.data_proc.dlib_proc.get_all_lmarks()
         lmarks_ir = self.data_proc.remove_identity(lmarks)
         pred_lmarks_b = pred_lmarks[:lmarks_ir.shape[0], :, :lmarks_ir.shape[2]]
-        if scale_width:
+        if normalize:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=RuntimeWarning)
                 width_ir = np.nanmean(np.nanmax(lmarks_ir[..., 0], 1) - np.nanmin(lmarks_ir[..., 0], 1))
@@ -574,6 +575,8 @@ class Analysis:
             pred_lmarks_b[..., 0] += width_b/2
             lmarks_ir /= np.nanmax(lmarks_ir[..., 0])
             pred_lmarks_b /= np.nanmax(pred_lmarks_b[..., 0])
+        if shuffle:
+            np.random.shuffle(pred_lmarks_b)
         if mouth_only:
             lmarks_ir = lmarks_ir[:, 48:]
             pred_lmarks_b = pred_lmarks_b[:, 48:]
